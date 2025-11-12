@@ -6,8 +6,7 @@ class QuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      // Ini adalah card putih yang sedikit "naik" ke atas
-      transform: Matrix4.translationValues(0.0, -30.0, 0.0),
+      transform: Matrix4.translationValues(0.0, -15.0, 0.0),
       margin: EdgeInsets.symmetric(horizontal: 20),
       padding: EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
@@ -39,9 +38,9 @@ class QuickActions extends StatelessWidget {
                 context,
                 Icons.numbers,
                 "Input Code",
-                Color(0xFF1E392A), // Warna Ikon (Hijau)
+                Color(0xFF1E392A),
                 () {
-                  // Panggil api/redeem-code di sini
+                  // Panggil api/redeem-code 
                 },
               ),
               _buildActionItem(
@@ -50,14 +49,14 @@ class QuickActions extends StatelessWidget {
                 "Redeem",
                 Color(0xFF1E392A),
                 () {
-                  // Panggil api/rewards di sini
+                  // Panggil api/rewards 
                 },
               ),
               _buildActionItem(
                 context,
                 Icons.local_offer,
                 "Promos",
-                Color(0xFFC7A158), // Warna Ikon (Emas)
+                Color(0xFFC7A158), 
                 () {
                   // Navigasi ke halaman promo
                 },
@@ -80,7 +79,7 @@ class QuickActions extends StatelessWidget {
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1), // Background ikon
+                color: iconColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 28),
