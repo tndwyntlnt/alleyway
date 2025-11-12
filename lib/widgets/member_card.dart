@@ -16,7 +16,6 @@ class MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Warna hijau yang sedikit lebih terang dari background
     final Color cardColor = Color(0xFF2A5A40); 
     
     return Container(

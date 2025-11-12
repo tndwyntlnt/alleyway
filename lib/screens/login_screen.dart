@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/api_service.dart'; // Kita akan perbarui ini
+import '../services/api_service.dart';
 import 'home_screen.dart';
-import 'register_screen.dart'; // Kita akan buat file ini
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -20,15 +20,13 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Panggil method login (yang akan kita buat di ApiService)
-      // !!! PENTING: Sesuaikan key JSON 'token' dan 'message'
       Map<String, dynamic> result = await apiService.login(
         _emailController.text,
         _passwordController.text,
       );
 
       if (result.containsKey('token') && mounted) {
-        // Jika sukses, navigasi ke HomeScreen
+        // Jika sukses, arahin ke HomeScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );

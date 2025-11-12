@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/recent_activity.dart'; // Import model baru
-import '../services/api_service.dart'; // Import ApiService
+import '../models/recent_activity.dart';
+import '../services/api_service.dart';
 
 class RecentActivityList extends StatelessWidget {
   RecentActivityList({Key? key}) : super(key: key);
 
-  // Buat instance dari ApiService
   final ApiService apiService = ApiService();
 
   @override
@@ -14,7 +13,6 @@ class RecentActivityList extends StatelessWidget {
       future: apiService.fetchRecentActivity(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // Tampilkan loading kecil
           return Container(
             height: 150,
             child: Center(
@@ -33,7 +31,6 @@ class RecentActivityList extends StatelessWidget {
         } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
           final List<RecentActivity> activities = snapshot.data!;
           
-          // Gunakan Column karena ini bagian dari ListView utama
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),
             child: Column(
@@ -55,7 +52,6 @@ class RecentActivityList extends StatelessWidget {
     );
   }
 
-  // Widget ini sama seperti di versi mock, tapi sekarang menerima data asli
   Widget _buildActivityItem(RecentActivity activity) {
     bool isCredit = activity.points > 0;
     Color pointColor = isCredit ? Colors.green[700]! : Colors.red;
@@ -88,7 +84,7 @@ class RecentActivityList extends StatelessWidget {
                 ),
                 SizedBox(height: 2),
                 Text(
-                  activity.date, // Gunakan tanggal yang sudah diformat
+                  activity.date,
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],

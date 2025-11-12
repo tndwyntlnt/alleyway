@@ -26,7 +26,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Panggil method register (yang akan kita buat)
       Map<String, dynamic> result = await apiService.register(
         _nameController.text,
         _emailController.text,
@@ -35,15 +34,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
 
       if (result.containsKey('token') && mounted) {
-        // Jika sukses, langsung login dan navigasi ke HomeScreen
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        // Tampilkan pesan error (mungkin error validasi)
         String errorMessage = result['message'] ?? 'Registration failed.';
         if(result.containsKey('errors')) {
-           // Format error dari Laravel
            errorMessage = result['errors'].values.map((e) => e[0]).join('\n');
         }
         _showError(errorMessage);

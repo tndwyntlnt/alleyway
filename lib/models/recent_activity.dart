@@ -16,15 +16,13 @@ class RecentActivity {
     String formattedDate(String dateString) {
       try {
         DateTime dateTime = DateTime.parse(dateString);
-        // Format: 12 Nov 2025
         return DateFormat('d MMM yyyy').format(dateTime);
       } catch (e) {
-        return dateString; // Kembalikan string asli jika format gagal
+        return dateString;
       }
     }
 
     return RecentActivity(
-      // Key ini HARUS SAMA dengan alias 'as' di query PHP
       title: json['description'] ?? 'No Description',
       points: json['points'] ?? 0,
       date: formattedDate(json['created_at'] ?? ''),

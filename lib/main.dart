@@ -21,10 +21,10 @@ class MyApp extends StatelessWidget {
           primary: Color(0xFF1E392A),
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: Color(0xFFF4F6F5), // Warna background utama
-        fontFamily: 'Poppins', // Anda bisa ganti font di pubspec.yaml
+        scaffoldBackgroundColor: Color(0xFFF4F6F5), 
+        fontFamily: 'Poppins', 
       ),
-      home: const SplashScreen(), // Mulai dari HomeScreen
+      home: const SplashScreen(),
     );
   }
 }
