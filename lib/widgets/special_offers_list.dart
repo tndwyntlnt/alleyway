@@ -79,7 +79,7 @@ class SpecialOffersList extends StatelessWidget {
                   imageUrl: reward.imageUrl,
                   height: 150,
                   width: double.infinity,
-                  fit: BoxFit.cover,
+                  fit: BoxFit.contain,
                   placeholder: (context, url) => Container(
                     height: 150,
                     child: Center(child: CircularProgressIndicator()),
