@@ -6,7 +6,12 @@ import '../models/reward.dart';
 import '../models/recent_activity.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.100.6:8000";
+  // final String _baseUrl = "http://192.168.100.6:8000";
+  // final String _baseUrl = "http://192.168.1.15:8000";
+  // final String _baseUrl = "http://10.10.25.31:8000";
+  // final String _baseUrl = "http://10.35.33.137";
+  // final String _baseUrl = "http://10.231.113.137:8000";
+  final String _baseUrl = "http://192.168.1.6:8000";
 
   final _storage = const FlutterSecureStorage();
 
@@ -149,5 +154,29 @@ class ApiService {
 
   Future<Map<String, dynamic>> redeemCode(String code) async {
     return {'message': 'Not implemented yet'};
+  }
+
+  // api/rewards/redeem (ini ketrin's redeem page)
+  // ini cek poin user cukup ga, kalo cukup reduct.
+  Future<bool> redeemReward(int rewardId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/rewards/redeem'),
+        headers: await _getAuthHeaders(),
+        body: jsonEncode({
+          'reward_id': rewardId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true; // Success!
+      } else {
+        print ("Redeem failed : ${response.body}");
+        return false;
+      }
+    } catch (e) {
+      print("Error redeeming : $e");
+      return false;
+    }
   }
 }

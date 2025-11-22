@@ -7,6 +7,7 @@ import '../widgets/special_offers_list.dart';
 import '../widgets/recent_activity_list.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'redeem_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -55,7 +56,9 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      body: FutureBuilder<UserProfile>(
+      body: _selectedIndex == 1
+      ? RedeemScreen()
+      : FutureBuilder<UserProfile>(
         future: _userProfileFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
