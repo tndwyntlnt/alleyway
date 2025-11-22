@@ -5,8 +5,9 @@ import '../widgets/member_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/special_offers_list.dart';
 import '../widgets/recent_activity_list.dart';
-import '../services/api_service.dart';
+// Hapus duplikat import api_service
 import 'login_screen.dart';
+import 'profile_screen.dart'; // TAMBAHAN: Import halaman profil
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -16,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final ApiService apiService = ApiService();
   late Future<UserProfile> _userProfileFuture;
   int _selectedIndex = 0;
@@ -28,6 +28,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
+    // PERBAIKAN: Logika Navigasi
+    if (index == 4) {
+      // Index 4 adalah Profile
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfileScreen()),
+      );
+      return; // Jangan ubah _selectedIndex agar tetap di home saat kembali
+    }
+
     setState(() {
       _selectedIndex = index;
     });
@@ -35,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Color(0xFF1E392A); 
+    final Color primaryColor = Color(0xFF1E392A);
     final Color backgroundColor = Color(0xFFF4F6F5);
 
     return Scaffold(
@@ -43,14 +53,20 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: 'Redeem'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.card_giftcard),
+            label: 'Redeem',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.numbers), label: 'Input'),
-          BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: 'Promo'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_offer),
+            label: 'Promo',
+          ),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: primaryColor, 
-        unselectedItemColor: Colors.grey, 
+        selectedItemColor: primaryColor,
+        unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
@@ -60,18 +76,25 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
-                child: CircularProgressIndicator(color: Colors.white));
+              child: CircularProgressIndicator(color: Colors.white),
+            );
           } else if (snapshot.hasError) {
             return Center(
-                child: Text('Error: ${snapshot.error}',
-                    style: TextStyle(color: Colors.white)));
+              child: Text(
+                'Error: ${snapshot.error}',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           } else if (snapshot.hasData) {
             final user = snapshot.data!;
             return _buildHomeContent(user, backgroundColor);
           } else {
             return Center(
-                child: Text('No data found',
-                    style: TextStyle(color: Colors.white)));
+              child: Text(
+                'No data found',
+                style: TextStyle(color: Colors.white),
+              ),
+            );
           }
         },
       ),
@@ -82,7 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return ListView(
       children: [
         _buildHeader(user),
-
         Container(
           decoration: BoxDecoration(
             color: backgroundColor,
@@ -97,10 +119,10 @@ class _HomeScreenState extends State<HomeScreen> {
               QuickActions(),
               SizedBox(height: 24),
               _buildSectionHeader(context, "Special Offers"),
-              SpecialOffersList(), 
+              SpecialOffersList(),
               SizedBox(height: 24),
               _buildSectionHeader(context, "Recent Activity"),
-              RecentActivityList(), 
+              RecentActivityList(),
               SizedBox(height: 20),
             ],
           ),
@@ -129,10 +151,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () async {
                   final apiService = ApiService();
                   await apiService.logout();
-                  
+
                   if (!mounted) return;
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
                     (Route<dynamic> route) => false,
                   );
                 },
