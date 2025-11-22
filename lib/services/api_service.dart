@@ -6,7 +6,9 @@ import '../models/reward.dart';
 import '../models/recent_activity.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.100.6:8000";
+  // final String _baseUrl = "http://192.168.100.6:8000";
+  // final String _baseUrl = "http://10.10.40.85:8000";
+  final String _baseUrl = "http://10.232.213.240:8000";
 
   final _storage = const FlutterSecureStorage();
 
@@ -148,6 +150,34 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> redeemCode(String code) async {
-    return {'message': 'Not implemented yet'};
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/redeem-code'),
+        headers: await _getAuthHeaders(),
+        body: jsonEncode({
+          'code': code,
+        }),
+      );
+
+      var data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Code redeemed successfully!',
+          'data': data
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to redeem code'
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Connection error: $e'
+      };
+    }
   }
 }
