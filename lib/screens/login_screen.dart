@@ -73,26 +73,44 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // --- LOGIKA UTAMA: SUBMIT ---
   Future<void> _handleSubmit() async {
+    // 1. Validasi Input Form
     if (!_formKey.currentState!.validate()) return;
+
+    // 2. Tutup Keyboard agar tidak menutupi Popup
+    FocusScope.of(context).unfocus();
 
     setState(() => _isLoading = true);
 
     try {
+      // 3. Panggil API (gunakan trim pada email untuk hapus spasi tidak sengaja)
       Map<String, dynamic> result = await apiService.login(
-        _emailController.text,
+        _emailController.text.trim(),
         _passwordController.text,
       );
 
-      if (result.containsKey('token') && mounted) {
+      if (!mounted) return;
+
+      // 4. Cek Hasil Login
+      if (result.containsKey('token') && result['token'] != null) {
+        // --- SUKSES ---
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        _showError(result['message'] ?? 'Login failed. Unknown error.');
+        // --- GAGAL (Data Salah) ---
+        String message = result['message'] ?? 'Email atau password salah.';
+        _showFailureDialog('Login Gagal', message);
       }
     } catch (e) {
-      _showError(e.toString());
+      // --- ERROR SYSTEM / KONEKSI ---
+      if (mounted) {
+        _showFailureDialog(
+          'Terjadi Kesalahan',
+          'Gagal terhubung ke server. Periksa koneksi internet Anda.',
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -100,36 +118,58 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
+  // --- POPUP DIALOG ---
+  void _showFailureDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.redAccent,
+              size: 28,
+            ),
+            const SizedBox(width: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(16),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 15, color: Colors.black87),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF42532D),
+            ),
+            child: const Text(
+              'Coba Lagi',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    // Ambil ukuran layar untuk responsivitas
     final Size screenSize = MediaQuery.of(context).size;
-
-    // Tentukan tinggi header agar proporsional (misal 40% dari layar)
     final double headerHeight = screenSize.height * 0.40;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F5),
       body: SingleChildScrollView(
-        // ClampingScrollPhysics mencegah efek overscroll/bounce yang berlebihan
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
@@ -151,18 +191,12 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                 ),
-                // Konten Header (Logo & Teks)
-                // Gunakan Positioned/Align agar tidak terlalu turun ke bawah
                 Positioned.fill(
                   child: SafeArea(
                     child: Column(
-                      // MainAxisAlignment.start + Padding atas memastikan konten ada di bagian atas
-                      // bukan di tengah-tengah yang rawan tertutup card
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: screenSize.height * 0.05,
-                        ), // Jarak dari atas (dinamis)
+                        SizedBox(height: screenSize.height * 0.05),
                         // Logo Animasi
                         TweenAnimationBuilder(
                           tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -213,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen>
 
             // --- LAYER 2: Form Card (Overlap) ---
             Transform.translate(
-              // Offset negatif menarik card ke ATAS menumpuk header
               offset: const Offset(0, -50),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -334,7 +367,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                         const SizedBox(height: 20),
 
-                        // Forgot Password (Centered)
+                        // Forgot Password
                         _animatedItem(
                           3,
                           Center(
@@ -366,9 +399,8 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
 
-                        const SizedBox(
-                          height: 10,
-                        ), // Spasi kecil sebelum register
+                        const SizedBox(height: 10),
+
                         // Register Link
                         _animatedItem(
                           4,
@@ -411,7 +443,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-            // Tambahan spasi di bawah agar tidak mepet layar bawah
             const SizedBox(height: 20),
           ],
         ),
