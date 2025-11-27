@@ -6,7 +6,8 @@ import '../models/reward.dart';
 import '../models/recent_activity.dart';
 
 class ApiService {
-  final String _baseUrl = "http://192.168.100.6:8000";
+  //final String _baseUrl = "http://192.168.100.6:8000";
+  final String _baseUrl = "http://localhost:8000";
 
   final _storage = const FlutterSecureStorage();
 

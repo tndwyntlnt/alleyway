@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart'; 
 import '../services/api_service.dart';
 import '../models/recent_activity.dart';
+import '../widgets/recent_activity_list.dart'; 
 
 // Definisikan tipe aktivitas untuk filtering
 enum ActivityType { all, earned, redeemed }
@@ -19,16 +20,11 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
   final ApiService _apiService = ApiService();
 
   final Color primaryGreen = const Color(0xFF39524A); 
-  final Color redeemedColor = const Color(0xFFE47A7A); 
-  final Color earnedBgColor = const Color(0xFF39524A).withOpacity(0.1); 
-
+  
   @override
   void initState() {
     super.initState();
-    // Inisialisasi TabController dengan 3 tab
     _tabController = TabController(length: 3, vsync: this);
-    
-    // Menggunakan API Service
     _futureActivities = _apiService.fetchRecentActivity();
   }
 
@@ -36,89 +32,6 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
   void dispose() {
     _tabController.dispose();
     super.dispose();
-  }
-
-  String _formatDate(String dateString) {
-    try {
-      final dateTime = DateTime.parse(dateString);
-      return DateFormat('d MMMM yyyy', 'id_ID').format(dateTime); 
-    } catch (e) {
-      return dateString;
-    }
-  }
-
-  Widget _buildTransactionRow(RecentActivity activity) {
-    final bool isEarned = activity.points > 0;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0), 
-      child: Card( 
-        elevation: 2, 
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), 
-        ),
-        margin: EdgeInsets.zero, 
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  // Latar belakang ikon disesuaikan warnanya
-                  color: isEarned 
-                      ? earnedBgColor 
-                      : redeemedColor.withOpacity(0.2), 
-                  borderRadius: BorderRadius.circular(10), 
-                ),
-                child: Icon(
-                  // Ikon panah ke atas/bawah
-                  isEarned ? Icons.arrow_upward : Icons.arrow_downward,
-                  // Warna ikon disesuaikan
-                  color: isEarned ? primaryGreen : redeemedColor, 
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity.title,
-                      style: const TextStyle(
-                        color: Color(0xFF2E2E2E),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatDate(activity.date),
-                      style: const TextStyle(
-                        color: Color(0xFF7C7F64),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${isEarned ? "+" : ""}${activity.points} Points', 
-                style: TextStyle(
-                  color: isEarned ? primaryGreen : redeemedColor, 
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   // Widget untuk memfilter dan menampilkan list
@@ -139,7 +52,10 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
     return ListView.builder(
       itemCount: filteredActivities.length,
       itemBuilder: (context, index) {
-        return _buildTransactionRow(filteredActivities[index]);
+        return RecentActivityList.buildActivityItemRow(
+          filteredActivities[index],
+          showCard: true, 
+        );
       },
     );
   }
@@ -150,7 +66,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Riwayat Poin', 
+          'Transaction History', 
           style: TextStyle(
             color: Color(0xFF2E2E2E), 
             fontWeight: FontWeight.bold

@@ -1,198 +1,236 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter/services.dart'; // Untuk fungsi menyalin ke clipboard
-import '../models/promo.dart'; 
+import 'package:cached_network_image/cached_network_image.dart';
+import '../models/reward.dart'; 
+import '../services/api_service.dart'; 
 
 class PromoScreen extends StatefulWidget {
-  final String userAuthToken;
-
-  const PromoScreen({Key? key, required this.userAuthToken}) : super(key: key);
+  const PromoScreen({super.key});
 
   @override
   State<PromoScreen> createState() => _PromoScreenState();
 }
 
 class _PromoScreenState extends State<PromoScreen> {
-  
-  late Future<List<Promo>> _promosFuture;
-  
-  // URL endpoint API untuk mendapatkan semua promo
-  final String _apiUrl = 'https://api.caffinityapp.com/v1/promos';// nanti diubah 
+  // Color Definitions (Cleaned up from invisible characters)
+  final Color primaryGreenDark = const Color(0xFF1E3932);
+  final Color primaryGreenLight = const Color(0xFF3C6E47);
+  final Color lightGreenText = const Color(0xFF8FB996);
+  final Color darkText = const Color(0xFF2E2E2E);
+  final Color mutedText = const Color(0xFF9AA99A);
+  final Color accentBadge = const Color(0xFFC9A96A);
+  final Color bgColor = const Color(0xFFF7F8F5);
+  final Color lightBgCard = const Color(0xFFF7F8F5); 
+
+  // API Fetching Variables
+  late Future<List<Reward>> _futureRewards;
+  final ApiService _apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
-    _promosFuture = _fetchPromos();
+    _futureRewards = _apiService.fetchRewards();
   }
 
-  /// Mengambil daftar promo dari API
-  Future<List<Promo>> _fetchPromos() async {
-    try {
-      final response = await http.get(
-        Uri.parse(_apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.userAuthToken}', 
-        },
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        final List<dynamic> promoListJson = jsonResponse['data']; 
-        
-        return promoListJson
-            .map((json) => Promo.fromJson(json))
-            .where((promo) => promo.isActive) 
-            .toList();
-      } else {
-        throw Exception('Gagal memuat daftar promo. Status Code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Terjadi kesalahan koneksi: $e');
-    }
-  }
-
-  // Fungsi untuk menyalin kode promo ke clipboard
-  void _copyPromoCode(BuildContext context, String code) {
-    Clipboard.setData(ClipboardData(text: code));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Kode "$code" berhasil disalin!'),
-        backgroundColor: Colors.green,
+  Widget _buildRewardGridCard(BuildContext context, Reward reward) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16), 
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image Section
+          CachedNetworkImage(
+            imageUrl: reward.imageUrl,
+            height: 120, 
+            width: double.infinity,
+            fit: BoxFit.contain, 
+            placeholder: (context, url) => Container(
+              height: 120,
+              color: Colors.grey[200],
+              child: Center(
+                child: CircularProgressIndicator(color: primaryGreenLight, strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) => Container(
+              height: 120,
+              color: Colors.grey[300],
+              child: const Center(
+                child: Icon(Icons.broken_image, size: 30, color: Colors.grey),
+              ),
+            ),
+          ),
+          
+          // Content Section
+          Expanded(
+            child: Container(
+              color: lightBgCard, 
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title 
+                  Text(
+                    reward.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: darkText, 
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  const SizedBox(height: 4), 
+                  
+                  // Description / Points Required
+                  Text(
+                    '${reward.pointsRequired} Points Required', 
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: darkText, 
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+          
+                  // Detail Rewards Label
+                  Row(
+                    children: [
+                      Icon(Icons.star, size: 10, color: mutedText), 
+                      SizedBox(width: 1),
+                      Text(
+                        'Rewards', 
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: mutedText, 
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Semua Promo & Diskon 🏷️'),
-        backgroundColor: Colors.brown,
-      ),
-      body: FutureBuilder<List<Promo>>(
-        future: _promosFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: Colors.brown));
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Text('Error: ${snapshot.error}', textAlign: TextAlign.center),
-              ),
-            );
-          }
-
-          if (snapshot.hasData) {
-            final promos = snapshot.data!;
-            if (promos.isEmpty) {
-              return const Center(
-                child: Text('Saat ini belum ada promo aktif.'),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(12.0),
-              itemCount: promos.length,
-              itemBuilder: (context, index) {
-                return _buildPromoCard(context, promos[index]);
-              },
-            );
-          }
-          
-          return const Center(child: Text('Memuat Data...'));
-        },
-      ),
-    );
-  }
-  
-  // Widget untuk menampilkan setiap kartu promo
-  Widget _buildPromoCard(BuildContext context, Promo promo) {
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.symmetric(vertical: 8.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Judul Promo ---
-            Text(
-              promo.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.brown,
+      backgroundColor: bgColor,
+      body: Column(
+        children: [
+          // 1. Header 
+          Container(
+            padding: const EdgeInsets.only(top: 48, bottom: 32, left: 24, right: 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primaryGreenDark, primaryGreenLight],
               ),
             ),
-            const SizedBox(height: 8),
-
-            // --- Deskripsi ---
-            Text(
-              promo.description,
-              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-            ),
-            const SizedBox(height: 12),
-
-            // --- Periode Berlaku ---
-            Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.calendar_today, size: 14, color: Colors.green[700]),
-                const SizedBox(width: 5),
-                Text(
-                  promo.validityPeriod,
-                  style: TextStyle(fontSize: 12, color: Colors.green[700], fontWeight: FontWeight.w500),
-                ),
-              ],
-            ),
-            const Divider(height: 25),
-
-            // --- Kode Promo & Tombol Salin ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Gunakan Kode:', style: TextStyle(fontSize: 12, color: Colors.black54)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: Colors.brown.shade100,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.brown.shade200),
-                      ),
-                      child: Text(
-                        promo.promoCode,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 1.5,
-                          color: Colors.brown,
+                // Back Button
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.arrow_back, size: 20, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          'Back',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () => _copyPromoCode(context, promo.promoCode),
-                  icon: const Icon(Icons.copy, size: 18),
-                  label: const Text('Salin Kode'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.brown,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                const SizedBox(height: 24),
+                // Title
+                const Text(
+                  'Special Offers',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Description
+                Text(
+                  'Exclusive deals for members',
+                  style: TextStyle(
+                    color: lightGreenText,
+                    fontSize: 16,
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          
+          // 2. Promos List 
+          Expanded(
+            child: FutureBuilder<List<Reward>>(
+              future: _futureRewards,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(color: primaryGreenLight)
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Text('Failed to load rewards. Error: ${snapshot.error}'),
+                    )
+                  );
+                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  final rewards = snapshot.data!;
+                  
+                  return GridView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, 
+                      crossAxisSpacing: 16, 
+                      mainAxisSpacing: 16, 
+                      childAspectRatio: 0.85, 
+                    ),
+                    itemCount: rewards.length,
+                    itemBuilder: (context, index) {
+                      final reward = rewards[index];
+                      return _buildRewardGridCard(context, reward);
+                    },
+                  );
+                } else {
+                  return const Center(
+                    child: Text('No offers/rewards available at the moment.'),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

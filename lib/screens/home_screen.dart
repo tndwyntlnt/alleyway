@@ -8,6 +8,7 @@ import '../widgets/recent_activity_list.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'activity_history_screen.dart';
+import 'promo_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
