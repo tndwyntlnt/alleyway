@@ -7,6 +7,7 @@ import '../widgets/special_offers_list.dart';
 import '../widgets/recent_activity_list.dart';
 // Hapus duplikat import api_service
 import 'login_screen.dart';
+import 'input_kode.dart';
 import 'profile_screen.dart'; // TAMBAHAN: Import halaman profil
 
 class HomeScreen extends StatefulWidget {
@@ -43,6 +44,12 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _backToHome() {
+    setState(() {
+      _selectedIndex = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final Color primaryColor = Color(0xFF1E392A);
@@ -71,33 +78,49 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      body: FutureBuilder<UserProfile>(
-        future: _userProfileFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          } else if (snapshot.hasData) {
-            final user = snapshot.data!;
-            return _buildHomeContent(user, backgroundColor);
-          } else {
-            return Center(
-              child: Text(
-                'No data found',
-                style: TextStyle(color: Colors.white),
-              ),
-            );
-          }
-        },
-      ),
+      // body: FutureBuilder<UserProfile>(
+      //   future: _userProfileFuture,
+      //   builder: (context, snapshot) {
+      //     if (snapshot.connectionState == ConnectionState.waiting) {
+      //       return Center(
+      //           child: CircularProgressIndicator(color: Colors.white));
+      //     } else if (snapshot.hasError) {
+      //       return Center(
+      //           child: Text('Error: ${snapshot.error}',
+      //               style: TextStyle(color: Colors.white)));
+      //     } else if (snapshot.hasData) {
+      //       final user = snapshot.data!;
+      //       return _buildHomeContent(user, backgroundColor);
+      //     } else {
+      //       return Center(
+      //           child: Text('No data found',
+      //               style: TextStyle(color: Colors.white)));
+      //     }
+      //   },
+      // ),
+
+      body: _selectedIndex == 2
+          ? InputCodeScreen(onBack: _backToHome)
+          : FutureBuilder<UserProfile>(
+              future: _userProfileFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                      child: CircularProgressIndicator(color: Colors.white));
+                } else if (snapshot.hasError) {
+                  return Center(
+                      child: Text('Error: ${snapshot.error}',
+                          style: TextStyle(color: Colors.white)));
+                } else if (snapshot.hasData) {
+                  final user = snapshot.data!;
+                  return _buildHomeContent(user, backgroundColor);
+                } else {
+                  return Center(
+                      child: Text('No data found',
+                          style: TextStyle(color: Colors.white)));
+                }
+              },
+            ),
     );
   }
 

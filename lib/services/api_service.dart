@@ -6,13 +6,9 @@ import '../models/reward.dart';
 import '../models/recent_activity.dart';
 
 class ApiService {
-  // Pilihan Base URL (Sesuaikan dengan environment Anda)
-  // final String _baseUrl = "http://backendalleyway.test";
-  // final String _baseUrl = "http://10.134.40.142:8000";
-  // final String _baseUrl = "https://10.54.235.142:8000";
-  // Gunakan 10.0.2.2 jika menggunakan Android Emulator bawaan
-  // final String _baseUrl = "http://10.0.2.2:8000";
-  final String _baseUrl = "http://192.168.56.1:8000";
+  // final String _baseUrl = "http://192.168.100.6:8000";
+  // final String _baseUrl = "http://10.10.40.85:8000";
+  final String _baseUrl = "http://10.145.66.89:8000";
 
   final _storage = const FlutterSecureStorage();
 
@@ -226,7 +222,35 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> redeemCode(String code) async {
-    return {'message': 'Not implemented yet'};
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/redeem-code'),
+        headers: await _getAuthHeaders(),
+        body: jsonEncode({
+          'code': code,
+        }),
+      );
+
+      var data = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Code redeemed successfully!',
+          'data': data
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Failed to redeem code'
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Connection error: $e'
+      };
+    }
   }
 
   // --- FORGOT PASSWORD FEATURES (Dipertahankan & Disesuaikan) ---
