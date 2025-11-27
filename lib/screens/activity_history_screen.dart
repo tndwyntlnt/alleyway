@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import '../services/api_service.dart';
 import '../models/recent_activity.dart';
 
+// Definisikan tipe aktivitas untuk filtering
+enum ActivityType { all, earned, redeemed }
+
 class ActivityHistoryScreen extends StatefulWidget {
   const ActivityHistoryScreen({super.key});
 
@@ -10,20 +13,35 @@ class ActivityHistoryScreen extends StatefulWidget {
   State<ActivityHistoryScreen> createState() => _ActivityHistoryScreenState();
 }
 
-class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
+class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with SingleTickerProviderStateMixin {
   late Future<List<RecentActivity>> _futureActivities;
+  late TabController _tabController;
   final ApiService _apiService = ApiService();
+
+  final Color primaryGreen = const Color(0xFF39524A); 
+  final Color redeemedColor = const Color(0xFFE47A7A); 
+  final Color earnedBgColor = const Color(0xFF39524A).withOpacity(0.1); 
 
   @override
   void initState() {
     super.initState();
+    // Inisialisasi TabController dengan 3 tab
+    _tabController = TabController(length: 3, vsync: this);
+    
+    // Menggunakan API Service
     _futureActivities = _apiService.fetchRecentActivity();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   String _formatDate(String dateString) {
     try {
       final dateTime = DateTime.parse(dateString);
-      return DateFormat('d MMM yyyy, HH:mm', 'id_ID').format(dateTime);
+      return DateFormat('d MMMM yyyy', 'id_ID').format(dateTime); 
     } catch (e) {
       return dateString;
     }
@@ -32,70 +50,97 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
   Widget _buildTransactionRow(RecentActivity activity) {
     final bool isEarned = activity.points > 0;
     
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: Colors.grey.shade100,
-            width: 1,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 6.0), 
+      child: Card( 
+        elevation: 2, 
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), 
+        ),
+        margin: EdgeInsets.zero, 
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  // Latar belakang ikon disesuaikan warnanya
+                  color: isEarned 
+                      ? earnedBgColor 
+                      : redeemedColor.withOpacity(0.2), 
+                  borderRadius: BorderRadius.circular(10), 
+                ),
+                child: Icon(
+                  // Ikon panah ke atas/bawah
+                  isEarned ? Icons.arrow_upward : Icons.arrow_downward,
+                  // Warna ikon disesuaikan
+                  color: isEarned ? primaryGreen : redeemedColor, 
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity.title,
+                      style: const TextStyle(
+                        color: Color(0xFF2E2E2E),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _formatDate(activity.date),
+                      style: const TextStyle(
+                        color: Color(0xFF7C7F64),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${isEarned ? "+" : ""}${activity.points} Poin', 
+                style: TextStyle(
+                  color: isEarned ? primaryGreen : redeemedColor, 
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isEarned 
-                  ? const Color(0xFF8AA682).withOpacity(0.2) 
-                  : const Color(0xFFE47A7A).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isEarned ? Icons.south_west : Icons.north_east,
-              color: isEarned ? const Color(0xFF42532D) : const Color(0xFFE47A7A),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  activity.title,
-                  style: const TextStyle(
-                    color: Color(0xFF2E2E2E),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _formatDate(activity.date),
-                  style: const TextStyle(
-                    color: Color(0xFF7C7F64),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '${isEarned ? "+" : ""}${activity.points} pts',
-            style: TextStyle(
-              color: isEarned ? const Color(0xFF42532D) : const Color(0xFFE47A7A),
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+    );
+  }
+
+  // Widget untuk memfilter dan menampilkan list
+  Widget _buildActivityList(List<RecentActivity> activities, ActivityType type) {
+    final filteredActivities = activities.where((activity) {
+      if (type == ActivityType.earned) {
+        return activity.points > 0;
+      } else if (type == ActivityType.redeemed) {
+        return activity.points < 0;
+      }
+      return true; 
+    }).toList();
+
+    if (filteredActivities.isEmpty) {
+      return const Center(child: Text('Tidak ada riwayat di kategori ini.'));
+    }
+
+    return ListView.builder(
+      itemCount: filteredActivities.length,
+      itemBuilder: (context, index) {
+        return _buildTransactionRow(filteredActivities[index]);
+      },
     );
   }
 
@@ -105,38 +150,84 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
-          'Riwayat Aktivitas',
+          'Riwayat Poin', 
           style: TextStyle(
             color: Color(0xFF2E2E2E), 
             fontWeight: FontWeight.bold
           ),
         ),
+        centerTitle: true, 
         backgroundColor: Colors.white,
         elevation: 0.5,
-        iconTheme: const IconThemeData(color: Color(0xFF1E392A)),
+        iconTheme: IconThemeData(color: primaryGreen), 
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pop(); 
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close), 
+            onPressed: () {
+              Navigator.of(context).pop(); 
+            },
+          ),
+        ],
+        // BAGIAN TAB BAR
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60.0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+            child: Container(
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(20.0),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                indicatorSize: TabBarIndicatorSize.tab,
+                indicator: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20.0),
+                  color: primaryGreen, 
+                ),
+                labelColor: Colors.white, 
+                unselectedLabelColor: Colors.black54, 
+                tabs: const [
+                  Tab(text: 'Semua'),
+                  Tab(text: 'Diperoleh'),
+                  Tab(text: 'Ditukar'),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: FutureBuilder<List<RecentActivity>>(
         future: _futureActivities,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF42532D))
-            );
+            return Center(child: CircularProgressIndicator(color: primaryGreen)); 
           } else if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Gagal memuat data',
+                'Gagal memuat data dari API',
                 style: TextStyle(color: Colors.red.shade700),
               )
             );
           } else if (snapshot.hasData && snapshot.data!.isEmpty) {
             return const Center(child: Text('Tidak ada riwayat aktivitas.'));
           } else if (snapshot.hasData) {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              itemBuilder: (context, index) {
-                return _buildTransactionRow(snapshot.data![index]);
-              },
+            final activities = snapshot.data!;
+            
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildActivityList(activities, ActivityType.all),
+                _buildActivityList(activities, ActivityType.earned),
+                _buildActivityList(activities, ActivityType.redeemed),
+              ],
             );
           }
           return const SizedBox();

@@ -178,7 +178,6 @@ class _HomeScreenState extends State<HomeScreen> {
           TextButton(
             onPressed: () {
               if (isActivitySection) {
-                // Navigasi ke ActivityHistoryScreen
                 Navigator.push(
                   context,
                   MaterialPageRoute(
