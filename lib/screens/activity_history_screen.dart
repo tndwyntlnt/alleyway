@@ -107,7 +107,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
                 ),
               ),
               Text(
-                '${isEarned ? "+" : ""}${activity.points} Poin', 
+                '${isEarned ? "+" : ""}${activity.points} Points', 
                 style: TextStyle(
                   color: isEarned ? primaryGreen : redeemedColor, 
                   fontWeight: FontWeight.w600,
@@ -133,7 +133,7 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
     }).toList();
 
     if (filteredActivities.isEmpty) {
-      return const Center(child: Text('Tidak ada riwayat di kategori ini.'));
+      return const Center(child: Text('No history in this category.'));
     }
 
     return ListView.builder(
@@ -195,9 +195,9 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
                 labelColor: Colors.white, 
                 unselectedLabelColor: Colors.black54, 
                 tabs: const [
-                  Tab(text: 'Semua'),
-                  Tab(text: 'Diperoleh'),
-                  Tab(text: 'Ditukar'),
+                  Tab(text: 'All'),
+                  Tab(text: 'Earned'),
+                  Tab(text: 'Redeemed'),
                 ],
               ),
             ),
@@ -212,12 +212,12 @@ class _ActivityHistoryScreenState extends State<ActivityHistoryScreen> with Sing
           } else if (snapshot.hasError) {
             return Center(
               child: Text(
-                'Gagal memuat data dari API',
+                'Failed to load data from API',
                 style: TextStyle(color: Colors.red.shade700),
               )
             );
           } else if (snapshot.hasData && snapshot.data!.isEmpty) {
-            return const Center(child: Text('Tidak ada riwayat aktivitas.'));
+            return const Center(child: Text('No activity history available.'));
           } else if (snapshot.hasData) {
             final activities = snapshot.data!;
             
