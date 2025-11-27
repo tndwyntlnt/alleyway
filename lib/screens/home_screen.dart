@@ -9,6 +9,7 @@ import '../widgets/recent_activity_list.dart';
 import 'login_screen.dart';
 import 'input_kode.dart';
 import 'profile_screen.dart'; // TAMBAHAN: Import halaman profil
+import 'input_kode.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
