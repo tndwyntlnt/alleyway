@@ -57,12 +57,11 @@ class ApiService {
     }
   }
 
-  // PERBAIKAN DI SINI: Menambahkan parameter phone dan birthday agar tersimpan saat registrasi
   Future<Map<String, dynamic>> register(
     String name,
     String email,
-    String phone, // Ditambahkan
-    String birthday, // Ditambahkan
+    String phone,
+    String birthday,
     String password,
     String passwordConfirmation,
   ) async {
@@ -76,8 +75,8 @@ class ApiService {
         body: jsonEncode({
           'name': name,
           'email': email,
-          'phone': phone, // Kirim ke backend
-          'birthday': birthday, // Kirim ke backend
+          'phone': phone,
+          'birthday': birthday,
           'password': password,
           'password_confirmation': passwordConfirmation,
         }),
@@ -120,8 +119,6 @@ class ApiService {
 
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
-        // Pastikan struktur JSON sesuai, misal: data['customer'] atau data['user']
-        // Sesuaikan dengan respon API backend Anda
         return UserProfile.fromJson(data['customer'] ?? data['user']);
       } else {
         throw Exception(
@@ -130,7 +127,6 @@ class ApiService {
       }
     } catch (e) {
       print(e.toString());
-      // PERBAIKAN: Menambahkan field email, phone, dan birthday agar sesuai dengan UserProfile
       return UserProfile(
         name: "Error Loading",
         email: "-",
@@ -143,7 +139,6 @@ class ApiService {
     }
   }
 
-  // --- FUNGSI BARU: Update User Profile ---
   Future<bool> updateUserProfile(
     String name,
     String email,
@@ -151,7 +146,6 @@ class ApiService {
     String birthday,
   ) async {
     try {
-      // Pastikan endpoint ini sesuai dengan backend Anda (misal: /api/profile/update)
       final response = await http.post(
         Uri.parse('$_baseUrl/api/profile/update'),
         headers: await _getAuthHeaders(),
@@ -164,10 +158,10 @@ class ApiService {
       );
 
       if (response.statusCode == 200) {
-        return true; // Berhasil update
+        return true;
       } else {
         print("Update failed: ${response.body}");
-        return false; // Gagal update
+        return false;
       }
     } catch (e) {
       print("Update error: $e");
@@ -229,15 +223,12 @@ class ApiService {
     return {'message': 'Not implemented yet'};
   }
 
-  // --- FORGOT PASSWORD FEATURES (Dipertahankan & Disesuaikan) ---
+  // --- FORGOT PASSWORD FEATURES ---
 
-  // 1. Request Token (Kirim Email)
   Future<Map<String, dynamic>> sendResetToken(String email) async {
     try {
       final response = await http.post(
-        Uri.parse(
-          '$_baseUrl/api/forgot-password',
-        ), // Path disesuaikan dengan _baseUrl
+        Uri.parse('$_baseUrl/api/forgot-password'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -259,7 +250,6 @@ class ApiService {
     }
   }
 
-  // 2. Verifikasi Token
   Future<bool> verifyToken(String email, String token) async {
     try {
       final response = await http.post(
@@ -280,7 +270,6 @@ class ApiService {
     }
   }
 
-  // 3. Reset Password Baru
   Future<Map<String, dynamic>> resetPassword(
     String email,
     String token,
@@ -304,6 +293,33 @@ class ApiService {
       return jsonDecode(response.body);
     } catch (e) {
       throw Exception("Koneksi error: $e");
+    }
+  }
+
+  // --- FUNGSI GANTI PASSWORD (Diperbaiki: Masuk ke dalam Class) ---
+  Future<bool> changePassword(
+    String currentPassword,
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/api/change-password'),
+        headers: await _getAuthHeaders(),
+        body: jsonEncode({
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': confirmPassword,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      return false;
     }
   }
 }

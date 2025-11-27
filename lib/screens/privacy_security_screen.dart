@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'change_password_screen.dart'; // Import halaman ganti password
 
 class PrivacySecurityScreen extends StatelessWidget {
   const PrivacySecurityScreen({Key? key}) : super(key: key);
@@ -6,6 +7,7 @@ class PrivacySecurityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF7F8F5),
       appBar: AppBar(
         title: const Text(
           "Privacy & Security",
@@ -19,15 +21,30 @@ class PrivacySecurityScreen extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
-        children: const [
-          ListTile(
-            title: Text("Change Password"),
-            trailing: Icon(Icons.lock_outline),
-          ),
-          Divider(),
-          ListTile(
-            title: Text("Biometric Login"),
-            trailing: Icon(Icons.fingerprint),
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
+            ),
+            child: ListTile(
+              title: const Text(
+                "Change Password",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+              leading: const Icon(Icons.lock_outline, color: Color(0xFF1E392A)),
+              onTap: () {
+                // Navigasi ke halaman ChangePasswordScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
