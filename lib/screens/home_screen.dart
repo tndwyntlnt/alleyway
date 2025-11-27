@@ -7,6 +7,7 @@ import '../widgets/special_offers_list.dart';
 import '../widgets/recent_activity_list.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'activity_history_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -96,10 +97,10 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               QuickActions(),
               SizedBox(height: 24),
-              _buildSectionHeader(context, "Special Offers"),
+              _buildSectionHeader(context, "Special Offers",false),
               SpecialOffersList(), 
               SizedBox(height: 24),
-              _buildSectionHeader(context, "Recent Activity"),
+              _buildSectionHeader(context, "Recent Activity",true),
               RecentActivityList(), 
               SizedBox(height: 20),
             ],
@@ -160,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title, bool isActivitySection) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
@@ -175,7 +176,17 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () {
+              if (isActivitySection) {
+                // Navigasi ke ActivityHistoryScreen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ActivityHistoryScreen(),
+                  ),
+                );
+              }
+            },
             child: Text(
               "View All",
               style: TextStyle(
