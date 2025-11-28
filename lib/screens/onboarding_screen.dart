@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_screen.dart'; // Pastikan import ini sesuai dengan file projectmu
+import 'login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -13,24 +13,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Warna tema (Diambil dari sample logo/gambar)
   final Color _accentGold = const Color(0xFFC9A96A);
   final Color _textWhite = Colors.white;
-  // Warna hijau muda logo untuk tint (opsional, jika ingin logo berwarna putih/emas)
-  final Color _logoColor = const Color(0xFFA8C5A5);
 
+  // --- 1. DATA DIPERBARUI (Tambah path gambar) ---
   final List<Map<String, String>> _onboardingData = [
     {
+      "image": "assets/images/background.jpg", // Gambar Halaman 1
       "title": "Premium Coffee\nExperience",
       "desc":
           "Rasakan kenikmatan biji kopi pilihan yang diseduh sempurna untuk menemani harimu.",
     },
     {
+      "image": "assets/images/brewed.jpg", // Gambar Halaman 2
       "title": "Brewed with\nPassion",
       "desc":
           "Setiap cangkir diracik oleh barista profesional kami untuk memberikan rasa yang otentik.",
     },
     {
+      "image": "assets/images/order.jpg", // Gambar Halaman 3
       "title": "Order & Earn\nExclusive Rewards",
       "desc":
           "Pesan tanpa antri, kumpulkan poin di setiap transaksi, dan tukarkan dengan promo menarik.",
@@ -52,11 +53,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // LAYER 1: BACKGROUND IMAGE
+          // --- LAYER 1: DYNAMIC BACKGROUND IMAGE (Dengan Animasi) ---
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/background.jpg', // Pastikan background ada
-              fit: BoxFit.cover,
+            child: AnimatedSwitcher(
+              duration: const Duration(
+                milliseconds: 500,
+              ), // Durasi transisi gambar
+              transitionBuilder: (Widget child, Animation<double> animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: Image.asset(
+                _onboardingData[_currentPage]['image']!,
+                key: ValueKey<String>(
+                  _onboardingData[_currentPage]['image']!,
+                ), // Key agar Fluter tau gambar berubah
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
             ),
           ),
 
@@ -68,9 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(
-                      0xFF1E392A,
-                    ).withOpacity(0.6), // Hijau gelap transparan
+                    const Color(0xFF1E392A).withOpacity(0.6),
                     Colors.black.withOpacity(0.8),
                   ],
                 ),
@@ -82,13 +94,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SafeArea(
             child: Column(
               children: [
-                // --- BAGIAN LOGO YANG DIUBAH ---
+                // Header (Logo & Tahun)
                 Padding(
                   padding: const EdgeInsets.only(top: 40),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Baris 1: Since - Logo - 2023
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -102,18 +113,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                               letterSpacing: 0.5,
                             ),
                           ),
-
-                          // Gambar Logo di tengah
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 12.0,
                             ),
                             child: Image.asset(
-                              'assets/images/logo.png', // Ganti path sesuai lokasi logo kamu
-                              height: 40, // Ukuran logo disesuaikan
+                              'assets/images/logo.png',
+                              height: 40,
                             ),
                           ),
-
                           Text(
                             "2023",
                             style: TextStyle(
@@ -125,15 +133,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ],
                       ),
-
                       const SizedBox(height: 10),
-
-                      // Baris 2: Judul Besar "Alleyway Muse"
                       Text(
                         "Alleyway Muse",
                         style: TextStyle(
                           color: _textWhite,
-                          fontSize: 36, // Ukuran font besar
+                          fontSize: 36,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Serif',
                           letterSpacing: 0.5,
@@ -145,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 const Spacer(),
 
-                // --- Carousel Content ---
+                // Carousel Content
                 SizedBox(
                   height: 300,
                   child: PageView.builder(
@@ -160,7 +165,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
 
-                // --- Footer (Tombol & Indikator) ---
+                // Footer (Tombol & Indikator)
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
@@ -168,7 +173,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   child: Column(
                     children: [
-                      // Tombol Sign In / Next
                       SizedBox(
                         width: double.infinity,
                         height: 56,
@@ -184,15 +188,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(
-                              0xFF8AA682,
-                            ), // Hijau Sage
+                            backgroundColor: const Color(0xFF8AA682),
                             foregroundColor: Colors.white,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                30,
-                              ), // Lebih bulat
+                              borderRadius: BorderRadius.circular(30),
                             ),
                           ),
                           child: Text(
@@ -206,7 +206,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 24),
 
                       // Indikator Titik
@@ -217,7 +216,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           (index) => _buildDot(index),
                         ),
                       ),
-
                       const SizedBox(height: 20),
 
                       // Sign Up Text

@@ -1,4 +1,4 @@
-import 'dart:async'; // Diperlukan untuk timer animasi
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
@@ -120,12 +120,11 @@ class _RegisterScreenState extends State<RegisterScreen>
     setState(() => _isLoading = true);
 
     try {
-      // PERBAIKAN: Mengirim data phone dan birthday ke API
       Map<String, dynamic> result = await apiService.register(
         _nameController.text,
         _emailController.text,
-        _phoneController.text, // Ditambahkan
-        _birthdayController.text, // Ditambahkan
+        _phoneController.text,
+        _birthdayController.text,
         _passwordController.text,
         _passwordConfirmController.text,
       );
@@ -226,16 +225,21 @@ class _RegisterScreenState extends State<RegisterScreen>
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER SECTION (Logo & Title) ---
+            // --- HEADER SECTION (Background Image & Logo) ---
             Stack(
               children: [
                 Container(
                   height: size.height * 0.35,
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF42532D), Color(0xFF8AA682)],
+                    // UPDATED: Menggunakan Gambar kopi.jpg
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/kopi.jpg'),
+                      fit: BoxFit.cover,
+                      // Menambahkan filter gelap agar teks putih terbaca
+                      colorFilter: ColorFilter.mode(
+                        Colors.black54,
+                        BlendMode.darken,
+                      ),
                     ),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(40),
@@ -259,7 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // LOGO KOPI ANIMASI
+                      // --- LOGO ANIMASI (UPDATED: LOGO.PNG) ---
                       TweenAnimationBuilder(
                         tween: Tween<double>(begin: 0.0, end: 1.0),
                         duration: const Duration(seconds: 1),
@@ -270,21 +274,21 @@ class _RegisterScreenState extends State<RegisterScreen>
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(
-                                  0.1,
-                                ), // GANTI: Opacity disamakan
+                                color: Colors.white.withOpacity(0.15),
                                 shape: BoxShape.circle,
-                                // GANTI: Hapus border agar sama dengan Login
                               ),
-                              child: const Icon(
-                                Icons.coffee, // GANTI: Icon disamakan
-                                size: 48,
-                                color: Colors.white,
+                              // UPDATED: Menggunakan Image Asset Logo
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                height: 60,
+                                width: 60,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           );
                         },
                       ),
+
                       const SizedBox(height: 16),
                       const Text(
                         'Create Account',
@@ -320,9 +324,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(
-                        0.1,
-                      ), // GANTI: Shadow disamakan
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),

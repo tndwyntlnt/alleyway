@@ -75,16 +75,11 @@ class _LoginScreenState extends State<LoginScreen>
 
   // --- LOGIKA UTAMA: SUBMIT ---
   Future<void> _handleSubmit() async {
-    // 1. Validasi Input Form
     if (!_formKey.currentState!.validate()) return;
-
-    // 2. Tutup Keyboard agar tidak menutupi Popup
     FocusScope.of(context).unfocus();
-
     setState(() => _isLoading = true);
 
     try {
-      // 3. Panggil API (gunakan trim pada email untuk hapus spasi tidak sengaja)
       Map<String, dynamic> result = await apiService.login(
         _emailController.text.trim(),
         _passwordController.text,
@@ -92,19 +87,15 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!mounted) return;
 
-      // 4. Cek Hasil Login
       if (result.containsKey('token') && result['token'] != null) {
-        // --- SUKSES ---
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else {
-        // --- GAGAL (Data Salah) ---
         String message = result['message'] ?? 'Email atau password salah.';
         _showFailureDialog('Login Gagal', message);
       }
     } catch (e) {
-      // --- ERROR SYSTEM / KONEKSI ---
       if (mounted) {
         _showFailureDialog(
           'Terjadi Kesalahan',
@@ -118,7 +109,6 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  // --- POPUP DIALOG ---
   void _showFailureDialog(String title, String message) {
     showDialog(
       context: context,
@@ -173,17 +163,22 @@ class _LoginScreenState extends State<LoginScreen>
         physics: const ClampingScrollPhysics(),
         child: Column(
           children: [
-            // --- LAYER 1: Header Hijau ---
+            // --- LAYER 1: Header Image (Kopi) ---
             Stack(
               children: [
                 Container(
                   height: headerHeight,
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF42532D), Color(0xFF8AA682)],
+                    // GANTI BACKGROUND JADI GAMBAR KOPI
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/kopi.jpg'),
+                      fit: BoxFit.cover,
+                      // Filter gelap agar tulisan putih terbaca jelas
+                      colorFilter: ColorFilter.mode(
+                        Colors.black54,
+                        BlendMode.darken,
+                      ),
                     ),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(40),
@@ -197,6 +192,7 @@ class _LoginScreenState extends State<LoginScreen>
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         SizedBox(height: screenSize.height * 0.05),
+
                         // Logo Animasi
                         TweenAnimationBuilder(
                           tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -211,15 +207,17 @@ class _LoginScreenState extends State<LoginScreen>
                                   color: Colors.white.withOpacity(0.15),
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
-                                  Icons.coffee,
-                                  size: 48,
-                                  color: Colors.white,
+                                child: Image.asset(
+                                  'assets/images/logo.png',
+                                  height: 60,
+                                  width: 60,
+                                  fit: BoxFit.contain,
                                 ),
                               ),
                             );
                           },
                         ),
+
                         const SizedBox(height: 16),
                         const Text(
                           'Welcome Back',
@@ -245,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen>
               ],
             ),
 
-            // --- LAYER 2: Form Card (Overlap) ---
+            // --- LAYER 2: Form Card ---
             Transform.translate(
               offset: const Offset(0, -50),
               child: Padding(
@@ -271,7 +269,6 @@ class _LoginScreenState extends State<LoginScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Email Field
                         _animatedItem(0, _buildLabel('Email or Phone')),
                         _animatedItem(
                           0,
@@ -291,8 +288,6 @@ class _LoginScreenState extends State<LoginScreen>
                           ),
                         ),
                         const SizedBox(height: 20),
-
-                        // Password Field
                         _animatedItem(1, _buildLabel('Password')),
                         _animatedItem(
                           1,
@@ -325,10 +320,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 : null,
                           ),
                         ),
-
                         const SizedBox(height: 24),
-
-                        // Login Button
                         _animatedItem(
                           2,
                           SizedBox(
@@ -364,10 +356,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 20),
-
-                        // Forgot Password
                         _animatedItem(
                           3,
                           Center(
@@ -383,10 +372,6 @@ class _LoginScreenState extends State<LoginScreen>
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: const Color(0xFF42532D),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
                               ),
                               child: const Text(
                                 'Forgot password?',
@@ -398,10 +383,7 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
-                        // Register Link
                         _animatedItem(
                           4,
                           Center(
@@ -449,8 +431,6 @@ class _LoginScreenState extends State<LoginScreen>
       ),
     );
   }
-
-  // --- Helper Widgets & Styles ---
 
   Widget _animatedItem(int index, Widget child) {
     int safeIndex = index >= _slideAnimations.length ? 0 : index;
