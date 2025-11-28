@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'login_screen.dart';
+import 'login_screen.dart'; // Pastikan import ini sesuai dengan file projectmu
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({Key? key}) : super(key: key);
@@ -13,27 +13,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Data Onboarding (Ganti gambar/teks sesuai kebutuhan)
+  // Warna tema (Diambil dari sample logo/gambar)
+  final Color _accentGold = const Color(0xFFC9A96A);
+  final Color _textWhite = Colors.white;
+  // Warna hijau muda logo untuk tint (opsional, jika ingin logo berwarna putih/emas)
+  final Color _logoColor = const Color(0xFFA8C5A5);
+
   final List<Map<String, String>> _onboardingData = [
     {
-      "title": "Premium Coffee",
-      "text": "Nikmati biji kopi pilihan terbaik dari petani lokal Indonesia.",
-      "image": "assets/images/onboarding1.png", // Ganti dengan gambar Anda
+      "title": "Premium Coffee\nExperience",
+      "desc":
+          "Rasakan kenikmatan biji kopi pilihan yang diseduh sempurna untuk menemani harimu.",
     },
     {
-      "title": "Easy Order",
-      "text": "Pesan kopi favoritmu dengan mudah dan cepat lewat aplikasi.",
-      "image": "assets/images/onboarding2.png",
+      "title": "Brewed with\nPassion",
+      "desc":
+          "Setiap cangkir diracik oleh barista profesional kami untuk memberikan rasa yang otentik.",
     },
     {
-      "title": "Earn Rewards",
-      "text":
-          "Kumpulkan poin di setiap pembelian dan tukarkan dengan hadiah menarik.",
-      "image": "assets/images/onboarding3.png",
+      "title": "Order & Earn\nExclusive Rewards",
+      "desc":
+          "Pesan tanpa antri, kumpulkan poin di setiap transaksi, dan tukarkan dengan promo menarik.",
     },
   ];
 
-  // Fungsi selesai onboarding & simpan status
   Future<void> _finishOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isFirstTime', false);
@@ -46,162 +49,252 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = const Color(0xFF1E392A); // Hijau tema
-    final Color accentColor = const Color(0xFFC9A96A); // Emas
-
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Tombol Skip di pojok kanan atas
-            Align(
-              alignment: Alignment.topRight,
-              child: TextButton(
-                onPressed: _finishOnboarding,
-                child: Text(
-                  "Skip",
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-
-            // Carousel PageView
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (value) {
-                  setState(() => _currentPage = value);
-                },
-                itemCount: _onboardingData.length,
-                itemBuilder: (context, index) => _buildOnboardingContent(
-                  image: _onboardingData[index]["image"]!,
-                  title: _onboardingData[index]["title"]!,
-                  text: _onboardingData[index]["text"]!,
-                  color: primaryColor,
-                ),
-              ),
-            ),
-
-            // Indikator Halaman & Tombol Next
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  // Dots Indicator
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _onboardingData.length,
-                      (index) => _buildDot(index: index, color: primaryColor),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Tombol Utama
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_currentPage == _onboardingData.length - 1) {
-                          _finishOnboarding();
-                        } else {
-                          _pageController.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.ease,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        _currentPage == _onboardingData.length - 1
-                            ? "Get Started"
-                            : "Next",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Widget Konten Slide
-  Widget _buildOnboardingContent({
-    required String image,
-    required String title,
-    required String text,
-    required Color color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      body: Stack(
         children: [
-          // Placeholder Gambar (Ganti Image.asset dengan gambar asli)
-          Container(
-            height: 250,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[200], // Placeholder warna abu
-              borderRadius: BorderRadius.circular(20),
-              // image: DecorationImage(image: AssetImage(image), fit: BoxFit.cover),
-            ),
-            child: const Center(
-              child: Icon(Icons.image, size: 100, color: Colors.grey),
+          // LAYER 1: BACKGROUND IMAGE
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/background.jpg', // Pastikan background ada
+              fit: BoxFit.cover,
             ),
           ),
-          const SizedBox(height: 40),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: color,
+
+          // LAYER 2: DARK OVERLAY
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(
+                      0xFF1E392A,
+                    ).withOpacity(0.6), // Hijau gelap transparan
+                    Colors.black.withOpacity(0.8),
+                  ],
+                ),
+              ),
             ),
-            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              height: 1.5,
+
+          // LAYER 3: CONTENT
+          SafeArea(
+            child: Column(
+              children: [
+                // --- BAGIAN LOGO YANG DIUBAH ---
+                Padding(
+                  padding: const EdgeInsets.only(top: 40),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Baris 1: Since - Logo - 2023
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Since",
+                            style: TextStyle(
+                              color: _textWhite,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+
+                          // Gambar Logo di tengah
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12.0,
+                            ),
+                            child: Image.asset(
+                              'assets/images/logo.png', // Ganti path sesuai lokasi logo kamu
+                              height: 40, // Ukuran logo disesuaikan
+                            ),
+                          ),
+
+                          Text(
+                            "2023",
+                            style: TextStyle(
+                              color: _textWhite,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // Baris 2: Judul Besar "Alleyway Muse"
+                      Text(
+                        "Alleyway Muse",
+                        style: TextStyle(
+                          color: _textWhite,
+                          fontSize: 36, // Ukuran font besar
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'Serif',
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Spacer(),
+
+                // --- Carousel Content ---
+                SizedBox(
+                  height: 300,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (value) =>
+                        setState(() => _currentPage = value),
+                    itemCount: _onboardingData.length,
+                    itemBuilder: (context, index) => _buildPageContent(
+                      title: _onboardingData[index]["title"]!,
+                      desc: _onboardingData[index]["desc"]!,
+                    ),
+                  ),
+                ),
+
+                // --- Footer (Tombol & Indikator) ---
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 32,
+                  ),
+                  child: Column(
+                    children: [
+                      // Tombol Sign In / Next
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            if (_currentPage == _onboardingData.length - 1) {
+                              _finishOnboarding();
+                            } else {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 500),
+                                curve: Curves.ease,
+                              );
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xFF8AA682,
+                            ), // Hijau Sage
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                30,
+                              ), // Lebih bulat
+                            ),
+                          ),
+                          child: Text(
+                            _currentPage == _onboardingData.length - 1
+                                ? "Get Started"
+                                : "Next",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Indikator Titik
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          _onboardingData.length,
+                          (index) => _buildDot(index),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Sign Up Text
+                      GestureDetector(
+                        onTap: _finishOnboarding,
+                        child: RichText(
+                          text: TextSpan(
+                            text: "Don't have an account? ",
+                            style: TextStyle(
+                              color: _textWhite.withOpacity(0.7),
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Sign Up",
+                                style: TextStyle(
+                                  color: _textWhite,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  // Widget Dot Indikator
-  Widget _buildDot({required int index, required Color color}) {
+  Widget _buildPageContent({required String title, required String desc}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 40,
+              height: 1.1,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            desc,
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.85),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDot(int index) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.only(right: 8),
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 4),
       height: 8,
       width: _currentPage == index ? 24 : 8,
       decoration: BoxDecoration(
-        color: _currentPage == index ? color : color.withOpacity(0.3),
+        color: _currentPage == index
+            ? _accentGold
+            : Colors.white.withOpacity(0.3),
         borderRadius: BorderRadius.circular(4),
       ),
     );

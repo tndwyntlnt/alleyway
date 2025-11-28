@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/user_profile.dart';
 import 'login_screen.dart';
-import 'edit_profile_screen.dart'; // Pastikan file ini ada
-import 'notification_screen.dart'; // Pastikan file ini ada
-import 'help_support_screen.dart'; // Pastikan file ini ada
-import 'privacy_security_screen.dart'; // Pastikan file ini ada
+import 'edit_profile_screen.dart';
+import 'notification_screen.dart';
+import 'help_support_screen.dart';
+import 'privacy_security_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -85,13 +85,80 @@ class _ProfileScreenState extends State<ProfileScreen>
     }
   }
 
-  Future<void> _handleLogout() async {
-    await _apiService.logout();
-    if (mounted) {
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
-      );
+  // --- LOGIKA LOGOUT BARU ---
+
+  // 1. Tampilkan Popup Konfirmasi
+  Future<void> _showLogoutConfirmation() async {
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFE47A7A)),
+              SizedBox(width: 10),
+              Text("Konfirmasi", style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          content: const Text(
+            "Apakah Anda yakin ingin keluar dari akun Anda?",
+            style: TextStyle(color: Colors.black87),
+          ),
+          actions: [
+            // Tombol Batal
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(foregroundColor: Colors.grey[600]),
+              child: const Text("Batal"),
+            ),
+            // Tombol Ya (Logout)
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Tutup dialog
+                _performLogout(); // Jalankan logout
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFE47A7A),
+              ),
+              child: const Text(
+                "Ya, Keluar",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 2. Jalankan Logout ke API
+  Future<void> _performLogout() async {
+    // Tampilkan loading saat proses logout
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      await _apiService.logout();
+      if (mounted) {
+        Navigator.pop(context); // Tutup loading
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Tutup loading jika error
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Gagal logout: $e')));
+      }
     }
   }
 
@@ -105,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    // WARNA UTAMA (Disamakan dengan Home Screen)
+    // WARNA UTAMA
     final Color primaryColor = const Color(0xFF1E392A);
 
     // Data dummy jika profile belum loaded atau null
@@ -128,14 +195,13 @@ class _ProfileScreenState extends State<ProfileScreen>
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // --- LAYER 1: HEADER SECTION (Curved & Gradient) ---
+                  // --- LAYER 1: HEADER SECTION ---
                   Stack(
                     children: [
                       Container(
-                        height: size.height * 0.40, // Tinggi Header
+                        height: size.height * 0.40,
                         decoration: BoxDecoration(
-                          color:
-                              primaryColor, // Menggunakan warna solid hijau tua
+                          color: primaryColor,
                           borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(40),
                           ),
@@ -207,9 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFFC9A96A,
-                                        ), // Warna Gold/Bronze
+                                        color: const Color(0xFFC9A96A),
                                         borderRadius: BorderRadius.circular(20),
                                         boxShadow: const [
                                           BoxShadow(
@@ -294,12 +358,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   const SizedBox(height: 24),
 
-                                  // TOMBOL EDIT PROFILE (Navigasi)
+                                  // TOMBOL EDIT PROFILE
                                   SizedBox(
                                     width: double.infinity,
                                     child: OutlinedButton(
                                       onPressed: () async {
-                                        // Perubahan di sini: Menunggu hasil dari EditProfileScreen
                                         final result = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -310,7 +373,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           ),
                                         );
 
-                                        // Jika result true (berhasil edit), reload profile
                                         if (result == true) {
                                           _loadProfile();
                                         }
@@ -363,7 +425,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     Icons.card_giftcard,
                                     "My Rewards",
                                     () {
-                                      // TODO: Navigate to Rewards
+                                      // Todo: Navigate to rewards
                                     },
                                     primaryColor,
                                   ),
@@ -419,13 +481,13 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                           const SizedBox(height: 24),
 
-                          // --- LOGOUT BUTTON ---
+                          // --- LOGOUT BUTTON (DENGAN KONFIRMASI) ---
                           _animatedItem(
                             3,
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton(
-                                onPressed: _handleLogout,
+                                onPressed: _showLogoutConfirmation,
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
                                     color: Color(0xFFE47A7A),
@@ -511,9 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(
-                height: 4,
-              ), // UPDATED: Jarak antara label dan value
+              const SizedBox(height: 4),
               Text(
                 value,
                 style: const TextStyle(
@@ -578,9 +638,7 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Widget _buildDivider({double indent = 0}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: 8.0,
-      ), // UPDATED: Tambah padding vertikal
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Divider(
         height: 1,
         thickness: 1,
