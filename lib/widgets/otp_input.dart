@@ -5,11 +5,8 @@ class OtpInput extends StatefulWidget {
   final Function(String) onCompleted;
   final Function(String) onChanged;
 
-  const OtpInput({
-    Key? key, 
-    required this.onCompleted,
-    required this.onChanged,
-  }) : super(key: key);
+  const OtpInput({Key? key, required this.onCompleted, required this.onChanged})
+    : super(key: key);
 
   @override
   State<OtpInput> createState() => _OtpInputState();
@@ -20,10 +17,7 @@ class _OtpInputState extends State<OtpInput> {
     6,
     (index) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(
-    6,
-    (index) => FocusNode(),
-  );
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   @override
   void dispose() {
@@ -43,7 +37,7 @@ class _OtpInputState extends State<OtpInput> {
     if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
-    
+
     if (index == 5 && _code.length == 6) {
       widget.onCompleted(_code);
     }
@@ -55,19 +49,15 @@ class _OtpInputState extends State<OtpInput> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(6, (index) {
         return Container(
-          width: 40, // Sedikit disesuaikan agar muat di layar kecil
+          width: 40,
           height: 56,
           margin: const EdgeInsets.symmetric(horizontal: 4),
           child: TextField(
             controller: _controllers[index],
             focusNode: _focusNodes[index],
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             keyboardType: TextInputType.text,
-            // Mengizinkan huruf dan angka (alphanumeric) sesuai screenshot user
             inputFormatters: [
               LengthLimitingTextInputFormatter(1),
               FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
@@ -77,20 +67,29 @@ class _OtpInputState extends State<OtpInput> {
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3C6E47),
+                  width: 2,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 2),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3C6E47),
+                  width: 2,
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 1),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3C6E47),
+                  width: 1,
+                ),
               ),
             ),
             onChanged: (value) => _handleChanged(index, value),
             onTap: () {
-               _controllers[index].selection = TextSelection(
+              _controllers[index].selection = TextSelection(
                 baseOffset: 0,
                 extentOffset: _controllers[index].text.length,
               );

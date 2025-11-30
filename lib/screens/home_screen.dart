@@ -5,11 +5,12 @@ import '../widgets/member_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/special_offers_list.dart';
 import '../widgets/recent_activity_list.dart';
-// Hapus duplikat import api_service
-import 'login_screen.dart';
+import 'activity_history_screen.dart';
+import 'promo_screen.dart';
 import 'input_kode.dart';
-import 'profile_screen.dart'; // TAMBAHAN: Import halaman profil
-import 'input_kode.dart';
+import 'profile_screen.dart';
+import 'redeem_screen.dart';
+import 'notification_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -29,15 +30,45 @@ class _HomeScreenState extends State<HomeScreen> {
     _userProfileFuture = apiService.fetchUserProfile();
   }
 
-  void _onItemTapped(int index) {
-    // PERBAIKAN: Logika Navigasi
+  Future<void> _refreshData() async {
+    setState(() {
+      _userProfileFuture = apiService.fetchUserProfile();
+    });
+
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  void _onItemTapped(int index) async {
+    if (index == 1) {
+      bool? result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const RedeemScreen()),
+      );
+
+      if (result == true) {
+        _refreshData();
+      }
+      return;
+    }
+
+    if (index == 3) {
+      bool? result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PromoScreen()),
+      );
+
+      if (result == true) {
+        _refreshData();
+      }
+      return;
+    }
+
     if (index == 4) {
-      // Index 4 adalah Profile
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const ProfileScreen()),
       );
-      return; // Jangan ubah _selectedIndex agar tetap di home saat kembali
+      return;
     }
 
     setState(() {
@@ -49,12 +80,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedIndex = 0;
     });
+    _refreshData();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Color(0xFF1E392A);
-    final Color backgroundColor = Color(0xFFF4F6F5);
+    final Color primaryColor = const Color(0xFF1E392A);
+    final Color backgroundColor = const Color(0xFFF4F6F5);
 
     return Scaffold(
       backgroundColor: primaryColor,
@@ -79,60 +111,62 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: _onItemTapped,
         type: BottomNavigationBarType.fixed,
       ),
-      // body: FutureBuilder<UserProfile>(
-      //   future: _userProfileFuture,
-      //   builder: (context, snapshot) {
-      //     if (snapshot.connectionState == ConnectionState.waiting) {
-      //       return Center(
-      //           child: CircularProgressIndicator(color: Colors.white));
-      //     } else if (snapshot.hasError) {
-      //       return Center(
-      //           child: Text('Error: ${snapshot.error}',
-      //               style: TextStyle(color: Colors.white)));
-      //     } else if (snapshot.hasData) {
-      //       final user = snapshot.data!;
-      //       return _buildHomeContent(user, backgroundColor);
-      //     } else {
-      //       return Center(
-      //           child: Text('No data found',
-      //               style: TextStyle(color: Colors.white)));
-      //     }
-      //   },
-      // ),
-
       body: _selectedIndex == 2
           ? InputCodeScreen(onBack: _backToHome)
-          : FutureBuilder<UserProfile>(
-              future: _userProfileFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                      child: CircularProgressIndicator(color: Colors.white));
-                } else if (snapshot.hasError) {
-                  return Center(
-                      child: Text('Error: ${snapshot.error}',
-                          style: TextStyle(color: Colors.white)));
-                } else if (snapshot.hasData) {
-                  final user = snapshot.data!;
-                  return _buildHomeContent(user, backgroundColor);
-                } else {
-                  return Center(
-                      child: Text('No data found',
-                          style: TextStyle(color: Colors.white)));
-                }
-              },
+          : RefreshIndicator(
+              // tarik buat refresh
+              onRefresh: _refreshData,
+              color: primaryColor,
+              backgroundColor: Colors.white,
+              child: FutureBuilder<UserProfile>(
+                future: _userProfileFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
+                  } else if (snapshot.hasError) {
+                    return ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.8,
+                          child: Center(
+                            child: Text(
+                              'Error: ${snapshot.error}',
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  } else if (snapshot.hasData) {
+                    final user = snapshot.data!;
+                    return _buildHomeContent(user, backgroundColor);
+                  } else {
+                    return const Center(
+                      child: Text(
+                        'No data found',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
     );
   }
 
   Widget _buildHomeContent(UserProfile user, Color backgroundColor) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       children: [
         _buildHeader(user),
         Container(
           decoration: BoxDecoration(
             color: backgroundColor,
-            borderRadius: BorderRadius.only(
+            borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(24),
               topRight: Radius.circular(24),
             ),
@@ -140,14 +174,22 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              QuickActions(),
-              SizedBox(height: 24),
-              _buildSectionHeader(context, "Special Offers"),
-              SpecialOffersList(),
-              SizedBox(height: 24),
-              _buildSectionHeader(context, "Recent Activity"),
+              QuickActions(
+                onCodeRedeemed: () {
+                  _refreshData();
+                },
+              ),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, "Special Offers", false),
+              SpecialOffersList(
+                onRedeemSuccess: () {
+                  _refreshData();
+                },
+              ),
+              const SizedBox(height: 24),
+              _buildSectionHeader(context, "Recent Activity", true),
               RecentActivityList(),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -161,27 +203,25 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Good morning,',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
-              // Icon(Icons.notifications, color: Colors.white),
               IconButton(
-                icon: Icon(Icons.logout, color: Colors.white),
-                onPressed: () async {
-                  final apiService = ApiService();
-                  await apiService.logout();
-
-                  if (!mounted) return;
-                  Navigator.of(context).pushAndRemoveUntil(
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
                     MaterialPageRoute(
-                      builder: (context) => const LoginScreen(),
+                      builder: (context) => const NotificationScreen(),
                     ),
-                    (Route<dynamic> route) => false,
                   );
                 },
               ),
@@ -189,26 +229,30 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Text(
             user.name,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           MemberCard(
             name: user.name,
             memberId: user.memberId,
             points: user.points,
             status: user.memberStatus,
           ),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
         ],
       ),
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(
+    BuildContext context,
+    String title,
+    bool isActivitySection,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
@@ -216,14 +260,32 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: () async {
+              if (isActivitySection) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ActivityHistoryScreen(),
+                  ),
+                );
+              } else {
+                bool? result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PromoScreen()),
+                );
+
+                if (result == true) {
+                  _refreshData();
+                }
+              }
+            },
             child: Text(
               "View All",
               style: TextStyle(

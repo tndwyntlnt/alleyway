@@ -1,8 +1,7 @@
-import 'dart:async'; // Diperlukan untuk timer animasi
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/api_service.dart';
-import 'home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -13,12 +12,10 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen>
     with SingleTickerProviderStateMixin {
-  // --- LOGIC & STATE ---
   final ApiService apiService = ApiService();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
 
-  // Controllers
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -26,11 +23,9 @@ class _RegisterScreenState extends State<RegisterScreen>
   final _passwordController = TextEditingController();
   final _passwordConfirmController = TextEditingController();
 
-  // UI State
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Animation Controller
   late AnimationController _animationController;
   final List<Animation<Offset>> _slideAnimations = [];
   final List<Animation<double>> _fadeAnimations = [];
@@ -47,7 +42,6 @@ class _RegisterScreenState extends State<RegisterScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    // Membuat animasi berurutan (staggered) untuk 8 elemen formulir
     for (int i = 0; i < 8; i++) {
       double start = i * 0.1;
       double end = start + 0.4;
@@ -87,7 +81,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     super.dispose();
   }
 
-  // --- VALIDATION LOGIC ---
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) return 'Email wajib diisi';
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
@@ -106,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     return null;
   }
 
-  // --- API CALL ---
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -120,12 +112,11 @@ class _RegisterScreenState extends State<RegisterScreen>
     setState(() => _isLoading = true);
 
     try {
-      // PERBAIKAN: Mengirim data phone dan birthday ke API
       Map<String, dynamic> result = await apiService.register(
         _nameController.text,
         _emailController.text,
-        _phoneController.text, // Ditambahkan
-        _birthdayController.text, // Ditambahkan
+        _phoneController.text,
+        _birthdayController.text,
         _passwordController.text,
         _passwordConfirmController.text,
       );
@@ -216,7 +207,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     }
   }
 
-  // --- UI BUILD ---
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -226,16 +216,18 @@ class _RegisterScreenState extends State<RegisterScreen>
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER SECTION (Logo & Title) ---
             Stack(
               children: [
                 Container(
                   height: size.height * 0.35,
                   decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFF42532D), Color(0xFF8AA682)],
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/kopi.jpg'),
+                      fit: BoxFit.cover,
+                      colorFilter: ColorFilter.mode(
+                        Colors.black54,
+                        BlendMode.darken,
+                      ),
                     ),
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(40),
@@ -259,7 +251,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // LOGO KOPI ANIMASI
                       TweenAnimationBuilder(
                         tween: Tween<double>(begin: 0.0, end: 1.0),
                         duration: const Duration(seconds: 1),
@@ -270,21 +261,20 @@ class _RegisterScreenState extends State<RegisterScreen>
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(
-                                  0.1,
-                                ), // GANTI: Opacity disamakan
+                                color: Colors.white.withOpacity(0.15),
                                 shape: BoxShape.circle,
-                                // GANTI: Hapus border agar sama dengan Login
                               ),
-                              child: const Icon(
-                                Icons.coffee, // GANTI: Icon disamakan
-                                size: 48,
-                                color: Colors.white,
+                              child: Image.asset(
+                                'assets/images/logo.png',
+                                height: 60,
+                                width: 60,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           );
                         },
                       ),
+
                       const SizedBox(height: 16),
                       const Text(
                         'Create Account',
@@ -309,7 +299,6 @@ class _RegisterScreenState extends State<RegisterScreen>
               ],
             ),
 
-            // --- FORM SECTION ---
             Transform.translate(
               offset: const Offset(0, -30),
               child: Container(
@@ -320,9 +309,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(
-                        0.1,
-                      ), // GANTI: Shadow disamakan
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 20,
                       offset: const Offset(0, 4),
                     ),
@@ -432,7 +419,6 @@ class _RegisterScreenState extends State<RegisterScreen>
                       ),
                       const SizedBox(height: 30),
 
-                      // REGISTER BUTTON
                       _animatedItem(
                         6,
                         SizedBox(
@@ -492,7 +478,6 @@ class _RegisterScreenState extends State<RegisterScreen>
     );
   }
 
-  // Helper Animation Wrapper
   Widget _animatedItem(int index, Widget child) {
     int safeIndex = index >= _slideAnimations.length ? 0 : index;
 

@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'screens/home_screen.dart';
-import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  const storage = FlutterSecureStorage();
+  String? token = await storage.read(key: 'auth_token');
+
+  runApp(MyApp(isLoggedIn: token != null));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final bool isLoggedIn;
+
+  const MyApp({Key? key, required this.isLoggedIn}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -15,16 +23,16 @@ class MyApp extends StatelessWidget {
       title: 'Alleyway Membership',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        primaryColor: Color(0xFF1E392A), 
+        primaryColor: const Color(0xFF1E392A),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(0xFF1E392A),
-          primary: Color(0xFF1E392A),
+          seedColor: const Color(0xFF1E392A),
+          primary: const Color(0xFF1E392A),
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: Color(0xFFF4F6F5), 
-        fontFamily: 'Poppins', 
+        scaffoldBackgroundColor: const Color(0xFFF4F6F5),
+        fontFamily: 'Poppins',
       ),
-      home: const SplashScreen(),
+      home: isLoggedIn ? const HomeScreen() : const OnboardingScreen(),
     );
   }
 }

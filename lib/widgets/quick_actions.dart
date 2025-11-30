@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import '../screens/redeem_screen.dart';
+import '../screens/promo_screen.dart';
+import '../screens/input_kode.dart';
 
 class QuickActions extends StatelessWidget {
-  const QuickActions({Key? key}) : super(key: key);
+  final VoidCallback? onCodeRedeemed;
+
+  const QuickActions({super.key, this.onCodeRedeemed});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      transform: Matrix4.translationValues(0.0, -15.0, 0.0),
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.symmetric(vertical: 20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -16,21 +20,21 @@ class QuickActions extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.08),
             blurRadius: 15,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
             child: Text(
               "Quick Actions",
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -38,27 +42,56 @@ class QuickActions extends StatelessWidget {
                 context,
                 Icons.numbers,
                 "Input Code",
-                Color(0xFF1E392A),
+                const Color(0xFF1E392A),
                 () {
-                  // Panggil api/redeem-code 
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InputCodeScreen(
+                        onBack: () {
+                          Navigator.pop(context);
+                          
+                          if (onCodeRedeemed != null) {
+                            onCodeRedeemed!();
+                          }
+                        },
+                      ),
+                    ),
+                  );
                 },
               ),
+              
               _buildActionItem(
                 context,
                 Icons.card_giftcard,
                 "Redeem",
-                Color(0xFF1E392A),
-                () {
-                  // Panggil api/rewards 
+                const Color(0xFF1E392A),
+                () async {
+                  final bool? result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const RedeemScreen()),
+                  );
+                  
+                  if (result == true && onCodeRedeemed != null) {
+                    onCodeRedeemed!();
+                  }
                 },
               ),
+              
               _buildActionItem(
                 context,
                 Icons.local_offer,
                 "Promos",
-                Color(0xFFC7A158), 
-                () {
-                  // Navigasi ke halaman promo
+                const Color(0xFFC7A158),
+                () async {
+                  final bool? result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PromoScreen()),
+                  );
+                  
+                  if (result == true && onCodeRedeemed != null) {
+                    onCodeRedeemed!();
+                  }
                 },
               ),
             ],
@@ -77,17 +110,17 @@ class QuickActions extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: iconColor.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: iconColor, size: 28),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               label,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
             ),
           ],
         ),

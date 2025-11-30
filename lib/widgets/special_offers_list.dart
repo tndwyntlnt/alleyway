@@ -1,129 +1,177 @@
 import 'package:flutter/material.dart';
-import '../models/reward.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 import '../services/api_service.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../models/promo.dart';
+import '../screens/promo_detail_screen.dart';
 
-class SpecialOffersList extends StatelessWidget {
-  SpecialOffersList({Key? key}) : super(key: key);
+class SpecialOffersList extends StatefulWidget {
+  final VoidCallback? onRedeemSuccess;
 
-  final ApiService apiService = ApiService();
+  const SpecialOffersList({Key? key, this.onRedeemSuccess}) : super(key: key);
+
+  @override
+  State<SpecialOffersList> createState() => _SpecialOffersListState();
+}
+
+class _SpecialOffersListState extends State<SpecialOffersList> {
+  final ApiService _apiService = ApiService();
+  late Future<List<Promo>> _promosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _promosFuture = _apiService.fetchPromos();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Reward>>(
-      future: apiService.fetchRewards(),
+    return FutureBuilder<List<Promo>>(
+      future: _promosFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            height: 220,
-            child: Center(
-              child: CircularProgressIndicator(
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
+          return const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator()),
           );
         } else if (snapshot.hasError) {
-          return Container(
-            height: 220,
-            child: Center(
-              child: Text("Error: ${snapshot.error}"),
-            ),
+          return SizedBox(
+            height: 200,
+            child: Center(child: Text("Error: ${snapshot.error}")),
           );
-        } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-          final List<Reward> rewards = snapshot.data!;
-          return Container(
-            height: 220, 
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: rewards.length,
-              itemBuilder: (context, index) {
-                final reward = rewards[index];
-                final double leftPadding = (index == 0) ? 20.0 : 8.0;
-                final double rightPadding =
-                    (index == rewards.length - 1) ? 20.0 : 8.0;
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return _buildEmptyState();
+        }
 
-                return Padding(
-                  padding: EdgeInsets.only(left: leftPadding, right: rightPadding),
-                  child: _buildRewardCard(reward), 
+        final promos = snapshot.data!;
+
+        return CarouselSlider.builder(
+          itemCount: promos.length,
+          itemBuilder: (context, index, realIndex) {
+            final promo = promos[index];
+            
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PromoDetailScreen(promo: promo),
+                  ),
                 );
               },
-            ),
-          );
-        } else {
-          return Container(
-            height: 220,
-            child: Center(
-              child: Text("Tidak ada hadiah tersedia saat ini."),
-            ),
-          );
-        }
+              child: _buildPromoCard(promo),
+            );
+          },
+          options: CarouselOptions(
+            height: 240, 
+            autoPlay: true, 
+            autoPlayInterval: const Duration(seconds: 4), 
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            autoPlayCurve: Curves.fastOutSlowIn,
+            pauseAutoPlayOnTouch: true, 
+            enlargeCenterPage: true, 
+            viewportFraction: 0.85,
+            aspectRatio: 16/9,
+            enableInfiniteScroll: true,
+          ),
+        );
       },
     );
   }
 
-  Widget _buildRewardCard(Reward reward) {
-    print("Mencoba memuat URL gambar: ${reward.imageUrl}");
+  Widget _buildEmptyState() {
     return Container(
-      width: 280,
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-        elevation: 3,
-        shadowColor: Colors.black.withOpacity(0.1),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                CachedNetworkImage(
-                  imageUrl: reward.imageUrl,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.contain,
-                  placeholder: (context, url) => Container(
-                    height: 150,
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 150,
-                    child: Icon(Icons.broken_image, size: 40, color: Colors.grey),
-                  ),
+      height: 150,
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.local_offer_outlined, size: 40, color: Colors.grey),
+          SizedBox(height: 8),
+          Text("No special offers right now", style: TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPromoCard(Promo promo) {
+    return Container(
+      width: double.infinity, 
+      margin: const EdgeInsets.symmetric(horizontal: 5.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Container(
+                width: double.infinity,
+                color: Colors.grey.shade100,
+                child: Hero(
+                  tag: "promo_${promo.id}_home",
+                  child: (promo.fullImageUrl != null)
+                      ? Image.network(
+                          promo.fullImageUrl!,
+                          fit: BoxFit.contain,
+                          errorBuilder: (ctx, err, stack) =>
+                              const Center(child: Icon(Icons.broken_image, color: Colors.grey)),
+                          loadingBuilder: (ctx, child, progress) {
+                            if (progress == null) return child;
+                            return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                          },
+                        )
+                      : const Center(child: Icon(Icons.image, color: Colors.grey)),
                 ),
-                Positioned(
-                  bottom: 10,
-                  right: 10,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      "${reward.pointsRequired} Poin",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Text(
-                reward.name,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ],
-        ),
+          ),
+
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    promo.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1E392A),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    promo.description,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -6,10 +6,7 @@ import '../widgets/code_info_card.dart';
 class InputCodeScreen extends StatefulWidget {
   final VoidCallback onBack;
 
-  const InputCodeScreen({
-    Key? key,
-    required this.onBack,
-  }) : super(key: key);
+  const InputCodeScreen({Key? key, required this.onBack}) : super(key: key);
 
   @override
   State<InputCodeScreen> createState() => _InputCodeScreenState();
@@ -17,15 +14,13 @@ class InputCodeScreen extends StatefulWidget {
 
 class _InputCodeScreenState extends State<InputCodeScreen> {
   final ApiService _apiService = ApiService();
-  
+
   final List<TextEditingController> _controllers = List.generate(
-    3,
+    6,
     (index) => TextEditingController(),
   );
-  final List<FocusNode> _focusNodes = List.generate(
-    3,
-    (index) => FocusNode(),
-  );
+
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
 
   bool _isLoading = false;
   String _errorMessage = '';
@@ -43,29 +38,33 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
 
   String get _fullCode {
     String suffix = _controllers.map((c) => c.text).join();
-    return "ALW$suffix"; 
+    return "ALW-$suffix";
   }
 
   void _handleChanged(int index, String value) {
     setState(() {
-      _errorMessage = ''; 
+      _errorMessage = '';
     });
 
-    if (value.isNotEmpty && index < 2) {
+    if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
-    
+
     if (value.isEmpty && index > 0) {
       _focusNodes[index - 1].requestFocus();
+    }
+
+    if (value.isNotEmpty && index == 5) {
+      FocusScope.of(context).unfocus();
     }
   }
 
   void _handleRedeem() async {
     String suffix = _controllers.map((c) => c.text).join();
-    
-    if (suffix.length != 3) {
+
+    if (suffix.length != 6) {
       setState(() {
-        _errorMessage = 'Please complete the code (3 digits)';
+        _errorMessage = 'Please complete the code (6 characters)';
       });
       return;
     }
@@ -90,67 +89,38 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      widget.onBack(); 
+      widget.onBack();
     } else {
       setState(() {
         _errorMessage = result['message'];
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message']),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(result['message']), backgroundColor: Colors.red),
       );
     }
-  }
-
-  Widget _buildFixedBox(String char) {
-    return Expanded(
-      child: Container(
-        height: 56, 
-        margin: const EdgeInsets.symmetric(horizontal: 3),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE0E7E1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF3C6E47), width: 1),
-        ),
-        child: Center(
-          child: Text(
-            char,
-            style: const TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF3C6E47),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildInputBox(int index) {
     return Expanded(
       child: Container(
-        height: 56,
-        margin: const EdgeInsets.symmetric(horizontal: 3),
+        height: 48,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
         child: TextField(
           controller: _controllers[index],
           focusNode: _focusNodes[index],
           textAlign: TextAlign.center,
-          textAlignVertical: TextAlignVertical.center, 
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          keyboardType: TextInputType.number,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          textCapitalization: TextCapitalization.characters,
+          keyboardType: TextInputType.text,
           inputFormatters: [
             LengthLimitingTextInputFormatter(1),
-            FilteringTextInputFormatter.digitsOnly,
+            UpperCaseTextFormatter(),
+            FilteringTextInputFormatter.allow(RegExp("[a-zA-Z0-9]")),
           ],
           decoration: InputDecoration(
             counterText: '',
-            isDense: true, 
-            contentPadding: const EdgeInsets.symmetric(vertical: 15), 
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 1),
@@ -158,10 +128,6 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 2),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF3C6E47), width: 1),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -174,7 +140,8 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isButtonEnabled = _controllers.every((c) => c.text.isNotEmpty) && !_isLoading;
+    bool isButtonEnabled =
+        _controllers.every((c) => c.text.isNotEmpty) && !_isLoading;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F5),
@@ -220,17 +187,13 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Enter your transaction code to earn points',
-                    style: TextStyle(
-                      color: Color(0xFF8FB996),
-                      fontSize: 16,
-                    ),
+                    'Enter transaction code (ALW-...)',
+                    style: TextStyle(color: Color(0xFF8FB996), fontSize: 16),
                   ),
                 ],
               ),
             ),
 
-            // Content Box
             Expanded(
               child: Transform.translate(
                 offset: const Offset(0, -64),
@@ -254,30 +217,51 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
                       child: Column(
                         children: [
                           const CodeInfoCard(
-                            message: 'Code is located on your receipt (Format: ALW-XXX)',
+                            message: 'Code found on your receipt (Ex: AESYLT)',
                           ),
-                          
+
                           const SizedBox(height: 32),
 
-                          // --- INPUT CODE SECTION ---
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              // 3 Kotak Fixed (Hardcoded ALW)
-                              _buildFixedBox('A'),
-                              _buildFixedBox('L'),
-                              _buildFixedBox('W'),
-                              
-                              const SizedBox(width: 4), 
+                              Container(
+                                height: 48,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                alignment: Alignment.center,
+                                margin: const EdgeInsets.only(
+                                  right: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE0E7E1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: const Color(0xFF3C6E47),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Text(
+                                  "ALW-",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF3C6E47),
+                                    letterSpacing: 1.0,
+                                  ),
+                                ),
+                              ),
 
-                              // 3 Kotak Input User (Angka)
                               _buildInputBox(0),
                               _buildInputBox(1),
                               _buildInputBox(2),
+                              _buildInputBox(3),
+                              _buildInputBox(4),
+                              _buildInputBox(5),
                             ],
                           ),
-                         
-                          
+
                           const SizedBox(height: 24),
 
                           if (_errorMessage.isNotEmpty)
@@ -300,32 +284,37 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
                               onPressed: isButtonEnabled ? _handleRedeem : null,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF3C6E47),
-                                disabledBackgroundColor: const Color(0xFF3C6E47).withOpacity(0.5),
+                                disabledBackgroundColor: const Color(
+                                  0xFF3C6E47,
+                                ).withOpacity(0.5),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 elevation: 0,
                               ),
-                              child: _isLoading 
-                                ? const SizedBox(
-                                    height: 20, 
-                                    width: 20, 
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                                  )
-                                : const Text(
-                                    'Claim Points',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Claim Points',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.white,
+                                      ),
                                     ),
-                                  ),
                             ),
                           ),
                           const SizedBox(height: 24),
 
                           const CodeInfoCard(
-                            message: 'Tip: Each transaction gives you points based on your purchase amount',
+                            message: 'Ensure all characters match the receipt.',
                             isTip: true,
                           ),
                         ],
@@ -338,6 +327,19 @@ class _InputCodeScreenState extends State<InputCodeScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class UpperCaseTextFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    return TextEditingValue(
+      text: newValue.text.toUpperCase(),
+      selection: newValue.selection,
     );
   }
 }

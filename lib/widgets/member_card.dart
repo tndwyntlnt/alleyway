@@ -16,8 +16,8 @@ class MemberCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor = Color(0xFF2A5A40); 
-    
+    final Color cardColor = Color(0xFF2A5A40);
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -49,7 +49,10 @@ class MemberCard extends StatelessWidget {
                   SizedBox(width: 4),
                   Text(
                     status,
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),

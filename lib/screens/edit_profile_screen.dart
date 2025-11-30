@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/user_profile.dart';
-import '../services/api_service.dart'; // Import ApiService
+import '../services/api_service.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final UserProfile userProfile;
@@ -13,15 +16,17 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+  File? _selectedImage;
+  final ImagePicker _picker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
-  final ApiService _apiService = ApiService(); // Inisialisasi API Service
+  final ApiService _apiService = ApiService();
 
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   late TextEditingController _birthdayController;
 
-  bool _isLoading = false; // Untuk loading indikator tombol
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -29,9 +34,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.userProfile.name);
     _emailController = TextEditingController(text: widget.userProfile.email);
     _phoneController = TextEditingController(text: widget.userProfile.phone);
-    _birthdayController = TextEditingController(
-      text: widget.userProfile.birthday,
-    );
+
+    String birthdayVal = widget.userProfile.birthday;
+    if (birthdayVal == '-' || birthdayVal == 'null') {
+      birthdayVal = '';
+    }
+
+    _birthdayController = TextEditingController(text: birthdayVal);
   }
 
   @override
@@ -43,18 +52,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime initialDate = DateTime.now();
+    try {
+      if (_birthdayController.text.isNotEmpty &&
+          _birthdayController.text != '-') {
+        initialDate = DateFormat('dd/MM/yyyy').parse(_birthdayController.text);
+      }
+    } catch (e) {
+      // 
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900), 
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: Color(0xFF1E392A),
+              onPrimary: Colors.white,
+              onSurface: Color(0xFF1E392A),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _birthdayController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery, 
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
       });
 
-      // Panggil fungsi update di API Service
-      bool success = await _apiService.updateUserProfile(
+      String rawDate =
+          _birthdayController.text; 
+      String formattedDate = rawDate;
+
+      if (rawDate.isNotEmpty) {
+        try {
+          DateTime date = DateFormat('dd/MM/yyyy').parse(rawDate);
+
+          formattedDate = DateFormat('yyyy-MM-dd').format(date);
+        } catch (e) {
+          print("Format tanggal error, mengirim raw data: $e");
+        }
+      }
+
+      final result = await _apiService.updateUserProfile(
         _nameController.text,
         _emailController.text,
         _phoneController.text,
-        _birthdayController.text,
+        formattedDate,
+        _selectedImage,
       );
 
       if (!mounted) return;
@@ -63,14 +136,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _isLoading = false;
       });
 
-      if (success) {
+      if (result['success'] == true) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Profile updated successfully!')),
         );
-        Navigator.pop(context); // Kembali ke halaman profile
+        Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update profile.')),
+          SnackBar(
+            content: Text(result['message'] ?? 'Failed to update profile.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -78,7 +154,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = const Color(0xFF1E392A); // Hijau sesuai Home
+    final primaryColor = const Color(0xFF1E392A); 
+
+    DecorationImage? _getProfileImage() {
+      if (_selectedImage != null) {
+        return DecorationImage(
+          image: FileImage(_selectedImage!),
+          fit: BoxFit.cover,
+        );
+      }
+
+      if (widget.userProfile.fullProfilePhotoUrl != null) {
+      return DecorationImage(
+        image: NetworkImage(widget.userProfile.fullProfilePhotoUrl!),
+        fit: BoxFit.cover,
+      );
+    }
+
+      return null;
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8F5),
@@ -100,7 +194,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
-              // --- PHOTO PROFILE ---
               Stack(
                 children: [
                   Container(
@@ -110,31 +203,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       color: Colors.grey[300],
                       shape: BoxShape.circle,
                       border: Border.all(color: primaryColor, width: 2),
+                      image: _getProfileImage(),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.grey,
-                    ),
+                    child:
+                        _selectedImage == null &&
+                            widget.userProfile.fullProfilePhotoUrl ==
+                                null
+                        ? const Icon(Icons.person, size: 60, color: Colors.grey)
+                        : null,
                   ),
                   Positioned(
                     bottom: 0,
                     right: 0,
                     child: GestureDetector(
-                      onTap: () {
-                        // TODO: Implement Image Picker
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'Fitur ubah foto belum diimplementasikan',
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: _pickImage,
                       child: Container(
                         padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: primaryColor,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFF1E392A),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
@@ -149,7 +235,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 30),
 
-              // --- FORM FIELDS ---
               _buildTextField(
                 "Full Name",
                 _nameController,
@@ -168,18 +253,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 "Birthday",
                 _birthdayController,
                 Icons.cake_outlined,
+                isReadOnly: true, 
+                onTap: () =>
+                    _selectDate(context),
+                hintText: "-", 
+                suffixIcon: Icons.calendar_today,
               ),
 
               const SizedBox(height: 40),
 
-              // --- SAVE BUTTON ---
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading
                       ? null
-                      : _handleSave, // Disable jika loading
+                      : _handleSave, 
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     shape: RoundedRectangleBorder(
@@ -215,8 +304,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget _buildTextField(
     String label,
     TextEditingController controller,
-    IconData icon,
-  ) {
+    IconData icon, {
+    bool isReadOnly = false, 
+    VoidCallback? onTap, 
+    IconData? suffixIcon, 
+    String? hintText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -230,8 +323,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
+          readOnly: isReadOnly, 
+          onTap: onTap, 
           decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: Colors.grey[400]),
             prefixIcon: Icon(icon, color: const Color(0xFF1E392A)),
+            suffixIcon: suffixIcon != null
+                ? Icon(suffixIcon, color: const Color(0xFF1E392A))
+                : null,
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/user_profile.dart';
 import 'login_screen.dart';
-import 'edit_profile_screen.dart'; // Pastikan file ini ada
-import 'notification_screen.dart'; // Pastikan file ini ada
-import 'help_support_screen.dart'; // Pastikan file ini ada
-import 'privacy_security_screen.dart'; // Pastikan file ini ada
+import 'edit_profile_screen.dart';
+import 'notification_screen.dart';
+import 'help_support_screen.dart';
+import 'privacy_security_screen.dart';
+import 'my_rewards_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -20,10 +21,20 @@ class _ProfileScreenState extends State<ProfileScreen>
   UserProfile? _userProfile;
   bool _isLoading = true;
 
-  // Animation Controller
   late AnimationController _animationController;
   final List<Animation<Offset>> _slideAnimations = [];
   final List<Animation<double>> _fadeAnimations = [];
+
+  Color _getMemberColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'gold':
+        return const Color(0xFFD4AF37);
+      case 'silver':
+        return const Color(0xFFC0C0C0);
+      default:
+        return const Color(0xFFCD7F32);
+    }
+  }
 
   @override
   void initState() {
@@ -38,7 +49,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    // Membuat animasi berurutan untuk 5 bagian utama
     for (int i = 0; i < 5; i++) {
       double start = i * 0.15;
       double end = start + 0.5;
@@ -105,10 +115,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    // WARNA UTAMA (Disamakan dengan Home Screen)
     final Color primaryColor = const Color(0xFF1E392A);
 
-    // Data dummy jika profile belum loaded atau null
     final defaultProfile = UserProfile(
       name: "Loading...",
       email: "-",
@@ -117,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       memberId: "-",
       points: 0,
       memberStatus: "Bronze",
+      profilePhotoPath: null,
     );
 
     final userToShow = _userProfile ?? defaultProfile;
@@ -128,26 +137,22 @@ class _ProfileScreenState extends State<ProfileScreen>
           : SingleChildScrollView(
               child: Column(
                 children: [
-                  // --- LAYER 1: HEADER SECTION (Curved & Gradient) ---
                   Stack(
                     children: [
                       Container(
-                        height: size.height * 0.40, // Tinggi Header
+                        height: size.height * 0.40,
                         decoration: BoxDecoration(
-                          color:
-                              primaryColor, // Menggunakan warna solid hijau tua
+                          color: primaryColor,
                           borderRadius: const BorderRadius.vertical(
                             bottom: Radius.circular(40),
                           ),
                         ),
                       ),
 
-                      // Konten Header
                       Positioned.fill(
                         child: SafeArea(
                           child: Column(
                             children: [
-                              // Back Button Row
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
@@ -166,7 +171,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                                 ),
                               ),
 
-                              // User Info Animation
                               _animatedItem(
                                 0,
                                 Column(
@@ -178,16 +182,32 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         shape: BoxShape.circle,
                                       ),
                                       child: Container(
-                                        padding: const EdgeInsets.all(20),
-                                        decoration: const BoxDecoration(
+                                        width: 100,
+                                        height: 100,
+                                        decoration: BoxDecoration(
                                           color: Colors.white,
                                           shape: BoxShape.circle,
+                                          image:
+                                              userToShow.fullProfilePhotoUrl !=
+                                                  null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    userToShow
+                                                        .fullProfilePhotoUrl!,
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
                                         ),
-                                        child: Icon(
-                                          Icons.person,
-                                          size: 48,
-                                          color: primaryColor,
-                                        ),
+                                        child:
+                                            userToShow.fullProfilePhotoUrl ==
+                                                null
+                                            ? Icon(
+                                                Icons.person,
+                                                size: 48,
+                                                color: primaryColor,
+                                              )
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(height: 12),
@@ -207,9 +227,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: const Color(
-                                          0xFFC9A96A,
-                                        ), // Warna Gold/Bronze
+                                        color: _getMemberColor(
+                                          userToShow.memberStatus,
+                                        ),
                                         borderRadius: BorderRadius.circular(20),
                                         boxShadow: const [
                                           BoxShadow(
@@ -238,7 +258,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ],
                   ),
 
-                  // --- LAYER 2: PROFILE INFO CARD ---
                   Transform.translate(
                     offset: const Offset(0, -40),
                     child: Padding(
@@ -294,12 +313,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                                   ),
                                   const SizedBox(height: 24),
 
-                                  // TOMBOL EDIT PROFILE (Navigasi)
                                   SizedBox(
                                     width: double.infinity,
                                     child: OutlinedButton(
                                       onPressed: () async {
-                                        // Perubahan di sini: Menunggu hasil dari EditProfileScreen
                                         final result = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -310,7 +327,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           ),
                                         );
 
-                                        // Jika result true (berhasil edit), reload profile
                                         if (result == true) {
                                           _loadProfile();
                                         }
@@ -342,7 +358,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                           const SizedBox(height: 24),
 
-                          // --- LAYER 3: MENU ITEMS ---
                           _animatedItem(
                             2,
                             Container(
@@ -363,7 +378,13 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     Icons.card_giftcard,
                                     "My Rewards",
                                     () {
-                                      // TODO: Navigate to Rewards
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const MyRewardsScreen(),
+                                        ),
+                                      );
                                     },
                                     primaryColor,
                                   ),
@@ -419,7 +440,6 @@ class _ProfileScreenState extends State<ProfileScreen>
 
                           const SizedBox(height: 24),
 
-                          // --- LOGOUT BUTTON ---
                           _animatedItem(
                             3,
                             SizedBox(
@@ -472,7 +492,6 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  // --- ANIMATION HELPER ---
   Widget _animatedItem(int index, Widget child) {
     int safeIndex = index >= _slideAnimations.length ? 0 : index;
     return FadeTransition(
@@ -483,8 +502,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
-
-  // --- WIDGET BUILDERS ---
 
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
     return Row(
@@ -513,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               const SizedBox(
                 height: 4,
-              ), // UPDATED: Jarak antara label dan value
+              ),
               Text(
                 value,
                 style: const TextStyle(
@@ -580,7 +597,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(
         vertical: 8.0,
-      ), // UPDATED: Tambah padding vertikal
+      ), 
       child: Divider(
         height: 1,
         thickness: 1,

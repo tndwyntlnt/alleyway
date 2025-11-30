@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'new_password_screen.dart'; // Import halaman password baru
+import 'new_password_screen.dart';
+import '../services/api_service.dart';
 
 class TokenVerificationScreen extends StatefulWidget {
   final String email;
@@ -72,25 +73,41 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen>
   Future<void> _verifyToken() async {
     String token = _controllers.map((c) => c.text).join();
     if (token.length != 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Masukkan 4 digit token"),
-          backgroundColor: Colors.red,
-        ),
-      );
       return;
     }
 
     setState(() => _isLoading = true);
-    // Simulasi Verifikasi Token
-    await Future.delayed(const Duration(seconds: 1));
+
+    final apiService = ApiService();
+
+    final result = await apiService.verifyToken(widget.email, token);
+
+    setState(() => _isLoading = false);
 
     if (mounted) {
-      setState(() => _isLoading = false);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const NewPasswordScreen()),
-      );
+      if (result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Token Terverifikasi"),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                NewPasswordScreen(email: widget.email, token: token),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -102,7 +119,6 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen>
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER ---
             Stack(
               children: [
                 Container(
@@ -173,7 +189,6 @@ class _TokenVerificationScreenState extends State<TokenVerificationScreen>
                 ),
               ],
             ),
-            // --- BODY ---
             Transform.translate(
               offset: const Offset(0, -40),
               child: Container(

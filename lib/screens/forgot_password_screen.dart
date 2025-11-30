@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'token_verification_screen.dart'; // Import halaman token
+import 'token_verification_screen.dart';
+import '../services/api_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -71,19 +72,38 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
 
     setState(() => _isLoading = true);
 
-    // Simulasi API Call
-    await Future.delayed(const Duration(seconds: 2));
+    // PANGGIL API
+    final apiService = ApiService();
+    final result = await apiService.sendResetToken(_emailController.text);
+
+    setState(() => _isLoading = false);
 
     if (mounted) {
-      setState(() => _isLoading = false);
-      // Navigasi ke halaman Verifikasi Token
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) =>
-              TokenVerificationScreen(email: _emailController.text),
-        ),
-      );
+      if (result['success']) {
+        // Jika sukses, lanjut ke layar verifikasi
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                TokenVerificationScreen(email: _emailController.text),
+          ),
+        );
+      } else {
+        // Jika gagal
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -96,7 +116,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // --- HEADER SECTION ---
             Stack(
               children: [
                 Container(
@@ -185,7 +204,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
               ],
             ),
 
-            // --- FORM SECTION ---
             Transform.translate(
               offset: const Offset(0, -40),
               child: Container(

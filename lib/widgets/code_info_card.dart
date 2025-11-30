@@ -6,7 +6,7 @@ class CodeInfoCard extends StatelessWidget {
   final bool isTip;
 
   const CodeInfoCard({
-    Key? key, 
+    Key? key,
     required this.message,
     this.icon = Icons.auto_awesome,
     this.isTip = false,
@@ -23,16 +23,13 @@ class CodeInfoCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-             const Text("💡 ", style: TextStyle(fontSize: 16)),
-             Expanded(
-               child: Text(
+            const Text("💡 ", style: TextStyle(fontSize: 16)),
+            Expanded(
+              child: Text(
                 message,
-                style: const TextStyle(
-                  color: Color(0xFF9AA99A),
-                  fontSize: 12,
-                ),
-                       ),
-             ),
+                style: const TextStyle(color: Color(0xFF9AA99A), fontSize: 12),
+              ),
+            ),
           ],
         ),
       );
@@ -46,20 +43,13 @@ class CodeInfoCard extends StatelessWidget {
             color: const Color(0xFF8FB996).withOpacity(0.2),
             shape: BoxShape.circle,
           ),
-          child: Icon(
-            icon,
-            size: 32,
-            color: const Color(0xFF3C6E47),
-          ),
+          child: Icon(icon, size: 32, color: const Color(0xFF3C6E47)),
         ),
         const SizedBox(height: 16),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Color(0xFF9AA99A),
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: Color(0xFF9AA99A), fontSize: 14),
         ),
       ],
     );

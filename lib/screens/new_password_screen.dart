@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Kembali ke login setelah sukses
+import 'login_screen.dart';
+import '../services/api_service.dart';
 
 class NewPasswordScreen extends StatefulWidget {
-  const NewPasswordScreen({Key? key}) : super(key: key);
+  final String email;
+  final String token;
+
+  const NewPasswordScreen({Key? key, required this.email, required this.token})
+    : super(key: key);
 
   @override
   State<NewPasswordScreen> createState() => _NewPasswordScreenState();
@@ -28,22 +33,35 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
 
   Future<void> _handleReset() async {
     if (!_formKey.currentState!.validate()) return;
+
     if (_passController.text != _confirmController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Password tidak cocok"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // 
       return;
     }
 
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(seconds: 2)); // Simulasi API
+
+    final apiService = ApiService();
+    final result = await apiService.resetPassword(
+      widget.email, 
+      widget.token,
+      _passController.text,
+      _confirmController.text,
+    );
 
     if (mounted) {
       setState(() => _isLoading = false);
-      _showSuccessDialog();
+
+      if (result['success']) {
+        _showSuccessDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message']),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -72,8 +90,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Tutup dialog
-                  // Kembali ke Login dan hapus semua route sebelumnya
+                  Navigator.pop(context); 
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
@@ -103,7 +120,6 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Header
             Container(
               height: size.height * 0.35,
               width: double.infinity,
